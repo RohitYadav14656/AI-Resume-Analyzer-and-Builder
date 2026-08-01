@@ -38,6 +38,10 @@ This project includes production-grade security implementations to prevent commo
 *   Standard client-side PDF libraries (like `html2pdf.js`) generate PDFs by capturing an image screenshot of the HTML canvas, meaning there is no selectable text layer. This fails ATS filters and backend text parsing.
 *   **Our Solution**: When generating the PDF, we extract a plain-text version of the resume and embed it as an **invisible, selectable text layer** (white color, 1pt size) on the PDF page. The PDF remains visually perfect while being **100% readable by ATS systems** and backend parser engines.
 
+### 4. Google OAuth & Email Verification Flows
+*   **Google OAuth Integration**: Allows seamless authentication using Google Accounts with secure JWT generation.
+*   **Nodemailer Email Workflows**: Integrated system for secure transactional emails, including HTML-styled password resets and verification.
+
 ---
 
 ## 🛠️ Getting Started
@@ -46,15 +50,16 @@ This project includes production-grade security implementations to prevent commo
 - [Node.js](https://nodejs.org) (v18.x or higher recommended)
 - [MongoDB](https://www.mongodb.com/try/download/community) (running locally or MongoDB Atlas connection string)
 - [Groq API Key](https://console.groq.com)
+- [Google Client ID](https://console.cloud.google.com) (for Google OAuth authentication)
+- SMTP Server details (Gmail App Password, Mailtrap, etc. for email notifications)
 
 ---
 
 ### Step-by-Step Installation
 
-#### 1. Obtain a Free Groq API Key
-1. Navigate to [console.groq.com/keys](https://console.groq.com/keys).
-2. Sign up or log in.
-3. Click **"Create API Key"** and copy the generated key.
+#### 1. Obtain API Credentials
+1. **Groq Key**: Navigate to [console.groq.com/keys](https://console.groq.com/keys), sign up/log in, and click **"Create API Key"**.
+2. **Google Client ID**: Navigate to [console.cloud.google.com](https://console.cloud.google.com), create a project, go to APIs & Services → Credentials, configure the OAuth Consent Screen, create an OAuth 2.0 Client ID, and add `http://localhost:5173` to the Authorized JavaScript Origins.
 
 #### 2. Backend Setup
 1. Navigate to the backend directory:
@@ -85,6 +90,19 @@ This project includes production-grade security implementations to prevent commo
    GROQ_API_KEY=your_groq_api_key_here
    JWT_SECRET=your_strong_jwt_secret_here
    ALLOWED_ORIGINS=http://localhost:5173
+
+   # Google OAuth
+   GOOGLE_CLIENT_ID=your_google_client_id_here
+
+   # Email (Nodemailer)
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USER=your_email_here
+   EMAIL_PASS=your_email_app_password_here
+   EMAIL_FROM="Resume AI <your_email_here>"
+
+   # Frontend URL
+   FRONTEND_URL=http://localhost:5173
    ```
 5. Spin up the backend development server:
    ```bash
@@ -101,11 +119,24 @@ This project includes production-grade security implementations to prevent commo
    ```bash
    npm install
    ```
-3. Start the frontend development server:
+3. Copy the template environment file:
+   - **Linux/macOS:**
+     ```bash
+     cp .env.example .env
+     ```
+   - **Windows (Command Prompt / PowerShell):**
+     ```powershell
+     Copy-Item .env.example .env
+     ```
+4. Open `.env` and enter your Google Client ID:
+   ```env
+   VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
+   ```
+5. Start the frontend development server:
    ```bash
    npm run dev
    ```
-4. Access the web interface at `http://localhost:5173`.
+6. Access the web interface at `http://localhost:5173`.
 
 ---
 
@@ -118,12 +149,13 @@ This project includes production-grade security implementations to prevent commo
 │   ├── models/         → User database schema and TTL-indexed RefreshToken database
 │   ├── routes/         → Endpoint routes (auth, analyze, resume)
 │   ├── uploads/        → Temporary folder for resume uploads (.pdf, .docx)
-│   ├── utils/          → Token fingerprinting helpers & parseResume (pdf-parse / mammoth)
+│   ├── utils/          → Token fingerprinting, emailUtils.js, & parseResume (pdf-parse / mammoth)
+│   ├── validators/     → Input schemas & Zod validators (authValidator.js)
 │   └── server.js       → Server entry point & DB connections
 └── frontend (React/Vite)
     ├── src/
     │   ├── api.js      → Axios interceptor instance (automates silent token refresh)
-    │   ├── pages/      → ResumeBuilder and ResumeAnalyzer pages
+    │   ├── pages/      → Auth.jsx, ResetPassword.jsx, ResumeBuilder.jsx, ResumeAnalyzer.jsx
     │   └── main.jsx    → Application entry point
     └── index.html      → Base HTML template
 ```
