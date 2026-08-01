@@ -274,6 +274,65 @@ Return ONLY the JSON array. Do not include markdown code block formatting (no \`
 
 
 /**
+ * POST /api/analyze/fix-grammar
+ * Body: { text }
+ */
+router.post("/fix-grammar", auth, async (req, res, next) => {
+  const { text } = req.body;
+  if (!text || text.trim().length === 0) {
+    return next(new AppError("Text parameter is required.", 400));
+  }
+
+  try {
+    const prompt = `Analyze the following text for any spelling, grammatical, punctuation, or style errors. If there are errors, return the corrected version of the text and a list of specific corrections made. If there are no errors, return the original text and an empty corrections list.
+
+TEXT TO ANALYZE:
+"""
+${text}
+"""
+
+Return the response ONLY as a JSON object in exactly this format:
+{
+  "correctedText": "<fully corrected text with all errors fixed>",
+  "hasErrors": <boolean indicating if there were any errors>,
+  "corrections": [
+    {
+      "original": "<part of the text that had the error>",
+      "corrected": "<corrected version of that part>",
+      "explanation": "<short explanation of the error and correction>"
+    }
+  ]
+}
+Ensure the output contains ONLY the JSON. No markdown backticks (no \`\`\`json or \`\`\`), no comments, no intro/outro.`;
+
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert resume grammar checker. Respond only with valid JSON matching the requested schema.",
+        },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.2,
+    });
+
+    const raw = completion.choices[0].message.content.trim();
+    let result;
+    try {
+      result = extractJSON(raw);
+    } catch (e) {
+      throw new Error("Failed to parse AI grammar check response: " + e.message);
+    }
+
+    res.json({ success: true, ...result });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+/**
  * POST /api/analyze/tailor-file
  * form-data: resume (file), jobDescription (text)
  */

@@ -14,6 +14,7 @@ An AI-powered, production-grade application designed to build ATS-optimized resu
 
 - **ATS-Optimized Resume Builder:** Seamlessly draft and compile professional resumes.
 - **AI-Powered Screening & Parsing:** Upload your PDF/DOCX resume and receive instant feedback, scores, and improvement recommendations from Llama-3.3-70B.
+- **AI-Powered Grammar Checker & Fixer:** Fix grammatical, spelling, and style errors in real time with detailed correction breakdowns using Groq Llama-3.3-70B.
 - **Production-Grade Security:** Out-of-the-box configurations preventing major Web/NoSQL vulnerabilities.
 - **Invisible Text Layer Embedding:** Preserves high-fidelity visual PDF representations while embedding searchable/readable plain text for ATS parsers.
 
