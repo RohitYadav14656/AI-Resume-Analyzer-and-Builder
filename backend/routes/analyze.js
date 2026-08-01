@@ -157,6 +157,123 @@ router.post("/tailor", async (req, res, next) => {
 });
 
 /**
+ * POST /api/analyze/suggest
+ * Body: { field, currentText, role, skills }
+ */
+router.post("/suggest", auth, async (req, res, next) => {
+  const { field, currentText, role, skills } = req.body;
+  if (!field) {
+    return next(new AppError("Field parameter is required.", 400));
+  }
+
+  try {
+    let prompt = "";
+    if (field === "summary") {
+      prompt = `Generate 3 professional summaries for a resume based on the following input:
+Target Role/Job Title: ${role || "Software Engineer"}
+Key Skills: ${skills || ""}
+Current text/draft (if any): ${currentText || ""}
+
+Provide 3 distinct options, tailored to highlight achievements and keywords.
+Return the options as a JSON array of strings:
+[
+  "Option 1...",
+  "Option 2...",
+  "Option 3..."
+]
+Return ONLY the JSON array. Do not include markdown code block formatting (no \`\`\`json or \`\`\`), and do not include any introductory or concluding text.`;
+    } else if (field === "experience") {
+      prompt = `Improve or generate professional bullet point descriptions for a work experience entry on a resume:
+Job Title/Role: ${role || "Software Engineer"}
+Current description/draft (if any): ${currentText || ""}
+
+Generate 3 distinct, high-impact options (where each option is a set of 3-4 professional bullet points using strong action verbs and metrics where possible, separated by newlines).
+Return the options as a JSON array of strings:
+[
+  "Option 1...",
+  "Option 2...",
+  "Option 3..."
+]
+Return ONLY the JSON array. Do not include markdown code block formatting (no \`\`\`json or \`\`\`), and do not include any introductory or concluding text.`;
+    } else if (field === "project") {
+      prompt = `Improve or generate professional bullet point descriptions for a project entry on a resume:
+Project Name: ${role || "Project"}
+Technologies Used: ${skills || ""}
+Current description/draft (if any): ${currentText || ""}
+
+Generate 3 distinct, high-impact options (where each option is a set of 2-3 professional bullet points highlighting implementation and results, separated by newlines).
+Return the options as a JSON array of strings:
+[
+  "Option 1...",
+  "Option 2...",
+  "Option 3..."
+]
+Return ONLY the JSON array. Do not include markdown code block formatting (no \`\`\`json or \`\`\`), and do not include any introductory or concluding text.`;
+    } else if (field === "skills") {
+      prompt = `Generate 3 distinct recommendations of professional technical skills/technologies for a resume based on the following:
+Target Role/Job Title: ${role || "Software Engineer"}
+Current skills draft (if any): ${currentText || ""}
+
+Provide 3 distinct options, each being a comma-separated list of 8-12 relevant, high-demand skills, technologies, tools, or frameworks.
+Return the options as a JSON array of strings:
+[
+  "Skill1, Skill2, Skill3...",
+  "Skill1, Skill2, Skill3...",
+  "Skill1, Skill2, Skill3..."
+]
+Return ONLY the JSON array. Do not include markdown code block formatting (no \`\`\`json or \`\`\`), and do not include any introductory or concluding text.`;
+    } else if (field === "extra") {
+      prompt = `Generate 3 distinct recommendations of professional awards, certifications, languages, or additional achievements for a resume based on the following:
+Target Role/Job Title: ${role || "Software Engineer"}
+Key Skills: ${skills || ""}
+Current text draft (if any): ${currentText || ""}
+
+Provide 3 distinct options, each being a list of 2-3 relevant professional certifications, awards, or details (separated by newlines or commas).
+Return the options as a JSON array of strings:
+[
+  "Option 1...",
+  "Option 2...",
+  "Option 3..."
+]
+Return ONLY the JSON array. Do not include markdown code block formatting (no \`\`\`json or \`\`\`), and do not include any introductory or concluding text.`;
+    } else {
+      return next(new AppError("Invalid field name. Must be 'summary', 'experience', 'project', 'skills', or 'extra'.", 400));
+    }
+
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert resume assistant. Respond only with a JSON array of strings.",
+        },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.7,
+    });
+
+    const raw = completion.choices[0].message.content.trim();
+    let suggestions;
+    try {
+      suggestions = JSON.parse(raw.replace(/```json|```/g, "").trim());
+    } catch (e) {
+      const start = raw.indexOf("[");
+      const end = raw.lastIndexOf("]");
+      if (start !== -1 && end !== -1) {
+        suggestions = JSON.parse(raw.substring(start, end + 1));
+      } else {
+        throw new Error("Failed to parse AI suggestions response: " + e.message);
+      }
+    }
+
+    res.json({ success: true, suggestions });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+/**
  * POST /api/analyze/tailor-file
  * form-data: resume (file), jobDescription (text)
  */

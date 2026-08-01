@@ -1,11 +1,147 @@
 import { useState, useRef } from "react";
-import axios from "axios";
+import api from "../api";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 const emptyExperience = { company: "", role: "", duration: "", description: "" };
 const emptyEducation = { school: "", degree: "", year: "" };
 const emptyProject = { name: "", description: "", techStack: "", link: "" };
+
+// ─── AI Suggestion Helper Component ──────────────────────────────────────────
+function AISuggestionButton({ field, currentText, role, skills, onSelect }) {
+  const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState(null);
+  const [show, setShow] = useState(false);
+
+  const getSuggestions = async () => {
+    setLoading(true);
+    setSuggestions(null);
+    setShow(true);
+    try {
+      const res = await api.post("/api/analyze/suggest", {
+        field,
+        currentText,
+        role,
+        skills,
+      });
+      setSuggestions(res.data.suggestions);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to get suggestions. Please verify you are logged in.");
+      setShow(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <button
+        type="button"
+        className="secondary"
+        onClick={getSuggestions}
+        style={{
+          padding: "3px 8px",
+          fontSize: "0.75rem",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          background: "linear-gradient(135deg, rgba(217, 119, 6, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%)",
+          border: "1px dashed var(--accent)",
+          borderRadius: "6px",
+          color: "var(--accent)",
+          cursor: "pointer",
+          fontWeight: "600",
+          boxShadow: "none",
+          transform: "none",
+        }}
+      >
+        ✨ AI Suggest
+      </button>
+
+      {show && (
+        <div style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
+          borderRadius: "16px",
+          padding: "1.5rem",
+          zIndex: 10000,
+          maxWidth: "500px",
+          width: "90%",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <span style={{ fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              ✨ AI Suggestions
+            </span>
+            <button
+              type="button"
+              onClick={() => setShow(false)}
+              style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "var(--text-muted)", padding: 0 }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {loading && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", padding: "2rem 0" }}>
+              <div style={{
+                border: "3px solid var(--surface-2)",
+                borderTop: "3px solid var(--accent)",
+                borderRadius: "50%",
+                width: "24px",
+                height: "24px",
+                animation: "spin 1s linear infinite"
+              }} />
+              <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Generating suggestions...</span>
+            </div>
+          )}
+
+          {!loading && suggestions && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem", maxHeight: "400px", overflowY: "auto" }}>
+              {suggestions.map((option, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => {
+                    onSelect(option);
+                    setShow(false);
+                  }}
+                  style={{
+                    padding: "1rem",
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "10px",
+                    fontSize: "0.875rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    whiteSpace: "pre-line",
+                    textAlign: "left",
+                    color: "var(--text-main)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--accent)";
+                    e.currentTarget.style.background = "var(--surface)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.background = "var(--surface-2)";
+                  }}
+                >
+                  {option}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {show && <div onClick={() => setShow(false)} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999 }} />}
+    </div>
+  );
+}
 
 export default function ResumeBuilder({ form, setForm }) {
   const [saving, setSaving] = useState(false);
@@ -21,7 +157,7 @@ export default function ResumeBuilder({ form, setForm }) {
     if (!jobDescription.trim()) return;
     setTailoring(true);
     try {
-      const res = await axios.post(`${API_BASE}/api/analyze/tailor`, {
+      const res = await api.post("/api/analyze/tailor", {
         resume: form,
         jobDescription,
       });
@@ -54,7 +190,7 @@ export default function ResumeBuilder({ form, setForm }) {
       alert("Resume tailored successfully!");
 
       // Auto-save the tailored version to the database
-      axios.post(`${API_BASE}/api/resume`, {
+      api.post("/api/resume", {
         ...updatedForm,
         skills: updatedForm.skills.split(",").map((s) => s.trim()).filter(Boolean),
       }).catch(err => console.error("Auto-saving tailored resume failed:", err));
@@ -173,7 +309,7 @@ export default function ResumeBuilder({ form, setForm }) {
   const saveToDB = async (silent = false) => {
     if (!silent) setSaving(true);
     try {
-      await axios.post(`${API_BASE}/api/resume`, {
+      await api.post("/api/resume", {
         ...form,
         skills: form.skills.split(",").map((s) => s.trim()).filter(Boolean),
       });
@@ -233,7 +369,15 @@ export default function ResumeBuilder({ form, setForm }) {
           <div style={{ marginBottom: "1.5rem" }}>
             <div className="section-chip">📝 Summary</div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Professional Summary</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <label style={{ margin: 0 }}>Professional Summary</label>
+                <AISuggestionButton
+                  field="summary"
+                  currentText={form.summary}
+                  skills={form.skills}
+                  onSelect={(val) => update("summary", val)}
+                />
+              </div>
               <textarea placeholder="Brief overview of your skills and experience..." rows={3} value={form.summary} onChange={(e) => update("summary", e.target.value)} />
             </div>
           </div>
@@ -242,7 +386,15 @@ export default function ResumeBuilder({ form, setForm }) {
           <div style={{ marginBottom: "1.5rem" }}>
             <div className="section-chip">🛠️ Skills</div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Technical Skills (comma separated)</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <label style={{ margin: 0 }}>Technical Skills (comma separated)</label>
+                <AISuggestionButton
+                  field="skills"
+                  currentText={form.skills}
+                  role={form.experience && form.experience[0] ? form.experience[0].role : ""}
+                  onSelect={(val) => update("skills", val)}
+                />
+              </div>
               <input placeholder="React, Node.js, Python, SQL..." value={form.skills} onChange={(e) => update("skills", e.target.value)} />
             </div>
           </div>
@@ -257,6 +409,15 @@ export default function ResumeBuilder({ form, setForm }) {
                   <input placeholder="Role / Title" value={exp.role} onChange={(e) => updateArrayField("experience", i, "role", e.target.value)} />
                 </div>
                 <input placeholder="Duration (e.g. Jan 2023 – Dec 2024)" style={{ marginBottom: "0.5rem" }} value={exp.duration} onChange={(e) => updateArrayField("experience", i, "duration", e.target.value)} />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <label style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600 }}>Job Description</label>
+                  <AISuggestionButton
+                    field="experience"
+                    currentText={exp.description}
+                    role={exp.role}
+                    onSelect={(val) => updateArrayField("experience", i, "description", val)}
+                  />
+                </div>
                 <textarea placeholder="Description (each new line = a bullet point)" rows={3} value={exp.description} onChange={(e) => updateArrayField("experience", i, "description", e.target.value)} style={{ marginBottom: "0.5rem" }} />
                 <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("experience", i)}>✕ Remove</button>
               </div>
@@ -290,6 +451,16 @@ export default function ResumeBuilder({ form, setForm }) {
                   <input placeholder="Tech Stack" value={proj.techStack} onChange={(e) => updateArrayField("projects", i, "techStack", e.target.value)} />
                 </div>
                 <input placeholder="Project Link / URL" style={{ marginBottom: "0.5rem" }} value={proj.link} onChange={(e) => updateArrayField("projects", i, "link", e.target.value)} />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <label style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600 }}>Project Description</label>
+                  <AISuggestionButton
+                    field="project"
+                    currentText={proj.description}
+                    role={proj.name}
+                    skills={proj.techStack}
+                    onSelect={(val) => updateArrayField("projects", i, "description", val)}
+                  />
+                </div>
                 <textarea placeholder="Description (each line = bullet point)" rows={3} value={proj.description} onChange={(e) => updateArrayField("projects", i, "description", e.target.value)} style={{ marginBottom: "0.5rem" }} />
                 <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("projects", i)}>✕ Remove</button>
               </div>
@@ -301,7 +472,16 @@ export default function ResumeBuilder({ form, setForm }) {
           <div style={{ marginBottom: "1.5rem" }}>
             <div className="section-chip">🏆 Extra</div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label>Awards, Certifications, Languages, etc.</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <label style={{ margin: 0 }}>Awards, Certifications, Languages, etc.</label>
+                <AISuggestionButton
+                  field="extra"
+                  currentText={form.extra || ""}
+                  role={form.experience && form.experience[0] ? form.experience[0].role : ""}
+                  skills={form.skills}
+                  onSelect={(val) => update("extra", val)}
+                />
+              </div>
               <textarea placeholder="e.g. AWS Certified Developer, Fluent in Spanish, Dean's List 2023..." rows={3} value={form.extra || ""} onChange={(e) => update("extra", e.target.value)} />
             </div>
           </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import ResumeBuilder from "./pages/ResumeBuilder";
 import ResumeAnalyzer from "./pages/ResumeAnalyzer";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import ResumeScene3D from "./components/ResumeScene3D";
 import SplineScene from "./components/SplineScene";
 import RiveCTA from "./components/RiveCTA";
@@ -40,6 +41,8 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [redirectTarget, setRedirectTarget] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [resetToken, setResetToken] = useState(null);
+  const [verifiedToast, setVerifiedToast] = useState(""); // "success" | "error" | ""
 
   const [form, setForm] = useState({
     userName: "",
@@ -65,6 +68,32 @@ export default function App() {
       }));
     }
   }, [user]);
+
+  // Detect password reset token OR email verification result in URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const resetTok = params.get("reset_token");
+    const verified = params.get("verified");
+    const verifyError = params.get("verify_error");
+
+    if (resetTok) {
+      setResetToken(resetTok);
+      setView("reset-password");
+    } else if (verified === "true") {
+      setVerifiedToast("success");
+      setView("login");
+      setTimeout(() => setVerifiedToast(""), 6000);
+    } else if (verifyError) {
+      setVerifiedToast("error");
+      setView("login");
+      setTimeout(() => setVerifiedToast(""), 6000);
+    }
+
+    // Clean query params from URL bar
+    if (resetTok || verified || verifyError) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -292,11 +321,68 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* ── Email Verification Toast ── */}
+      <AnimatePresence>
+        {verifiedToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -60 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            style={{
+              position: "fixed",
+              top: "80px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 9999,
+              background: verifiedToast === "success"
+                ? "linear-gradient(135deg, rgba(16,185,129,0.95), rgba(5,150,105,0.95))"
+                : "linear-gradient(135deg, rgba(225,29,72,0.95), rgba(190,18,60,0.95))",
+              color: "white",
+              padding: "0.9rem 1.5rem",
+              borderRadius: "14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.6rem",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+              backdropFilter: "blur(12px)",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              maxWidth: "460px",
+              width: "calc(100% - 2rem)",
+            }}
+          >
+            <span style={{ fontSize: "1.1rem" }}>{verifiedToast === "success" ? "✅" : "⚠️"}</span>
+            <span style={{ flex: 1 }}>
+              {verifiedToast === "success"
+                ? "Email verified! You can now log in to your account."
+                : "Verification link is invalid or expired. Please request a new one."}
+            </span>
+            <button
+              onClick={() => setVerifiedToast("")}
+              style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", padding: "2px 8px", fontSize: "0.8rem" }}
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ===== VIEWS ===== */}
       {view === "home" && <HeroPage navigate={navigate} />}
       {view === "builder" && <ResumeBuilder form={form} setForm={setForm} />}
       {view === "analyzer" && <ResumeAnalyzer form={form} setForm={setForm} setView={setView} />}
       {view === "login" && <Auth onAuthSuccess={handleAuthSuccess} />}
+      {view === "reset-password" && (
+        <ResetPassword
+          token={resetToken}
+          onGoToLogin={() => {
+            setResetToken(null);
+            setView("login");
+            scrollToTop();
+          }}
+        />
+      )}
     </div>
   );
 }

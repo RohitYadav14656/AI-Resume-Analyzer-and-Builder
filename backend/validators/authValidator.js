@@ -19,7 +19,7 @@ const registerSchema = z
       .min(6, "Password must be at least 6 characters")
       .max(128, "Password must be at most 128 characters"),
   })
-  .strip(); // drop unknown keys — prevents prototype pollution
+  .strip();
 
 const loginSchema = z
   .object({
@@ -33,6 +33,56 @@ const loginSchema = z
       .string({ required_error: "Password is required" })
       .min(1, "Password is required"),
   })
-  .strip(); // drop unknown keys
+  .strip();
 
-module.exports = { registerSchema, loginSchema };
+const forgotPasswordSchema = z
+  .object({
+    email: z
+      .string({ required_error: "Email is required" })
+      .trim()
+      .toLowerCase()
+      .email("Invalid email address"),
+  })
+  .strip();
+
+const resetPasswordSchema = z
+  .object({
+    token: z
+      .string({ required_error: "Reset token is required" })
+      .min(1, "Reset token is required"),
+
+    password: z
+      .string({ required_error: "New password is required" })
+      .min(6, "Password must be at least 6 characters")
+      .max(128, "Password must be at most 128 characters"),
+  })
+  .strip();
+
+// Google OAuth — frontend sends the access token received from Google
+const googleAuthSchema = z
+  .object({
+    accessToken: z
+      .string({ required_error: "Google access token is required" })
+      .min(1, "Google access token is required"),
+  })
+  .strip();
+
+// Resend verification email
+const resendVerificationSchema = z
+  .object({
+    email: z
+      .string({ required_error: "Email is required" })
+      .trim()
+      .toLowerCase()
+      .email("Invalid email address"),
+  })
+  .strip();
+
+module.exports = {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  googleAuthSchema,
+  resendVerificationSchema,
+};
