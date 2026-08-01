@@ -1,0 +1,596 @@
+import { useState, useRef } from "react";
+import axios from "axios";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
+const emptyExperience = { company: "", role: "", duration: "", description: "" };
+const emptyEducation = { school: "", degree: "", year: "" };
+const emptyProject = { name: "", description: "", techStack: "", link: "" };
+
+export default function ResumeBuilder({ form, setForm }) {
+  const [saving, setSaving] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const previewRef = useRef(null);
+
+  const [isTailorModalOpen, setIsTailorModalOpen] = useState(false);
+  const [jobDescription, setJobDescription] = useState("");
+  const [tailoring, setTailoring] = useState(false);
+  const [tailoredPreview, setTailoredPreview] = useState(null);
+
+  const handleTailorResume = async () => {
+    if (!jobDescription.trim()) return;
+    setTailoring(true);
+    try {
+      const res = await axios.post(`${API_BASE}/api/analyze/tailor`, {
+        resume: form,
+        jobDescription,
+      });
+      if (res.data && res.data.success && res.data.tailoredResume) {
+        setTailoredPreview(res.data.tailoredResume);
+      } else {
+        alert("Unexpected response from server. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to tailor resume. Please make sure backend is running.");
+    } finally {
+      setTailoring(false);
+    }
+  };
+
+  const applyTailoredResume = () => {
+    if (tailoredPreview) {
+      const updatedForm = {
+        ...form,
+        summary: tailoredPreview.summary || form.summary,
+        skills: tailoredPreview.skills || form.skills,
+        experience: tailoredPreview.experience || form.experience,
+        projects: tailoredPreview.projects || form.projects,
+      };
+      setForm(updatedForm);
+      setIsTailorModalOpen(false);
+      setTailoredPreview(null);
+      setJobDescription("");
+      alert("Resume tailored successfully!");
+
+      // Auto-save the tailored version to the database
+      axios.post(`${API_BASE}/api/resume`, {
+        ...updatedForm,
+        skills: updatedForm.skills.split(",").map((s) => s.trim()).filter(Boolean),
+      }).catch(err => console.error("Auto-saving tailored resume failed:", err));
+    }
+  };
+
+
+  const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+
+  const updateArrayField = (arrName, index, field, value) => {
+    setForm((f) => {
+      const arr = [...f[arrName]];
+      arr[index] = { ...arr[index], [field]: value };
+      return { ...f, [arrName]: arr };
+    });
+  };
+
+  const addRow = (arrName, empty) =>
+    setForm((f) => ({ ...f, [arrName]: [...f[arrName], empty] }));
+
+  const removeRow = (arrName, index) =>
+    setForm((f) => ({
+      ...f,
+      [arrName]: f[arrName].filter((_, i) => i !== index),
+    }));
+
+  /** 
+   * Uses html2pdf.js to generate a REAL text-based PDF
+   * (not a browser print screenshot — fully ATS-readable)
+   */
+  const downloadPDF = async () => {
+    if (!previewRef.current) return;
+    setDownloading(true);
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      const name = form.userName?.trim() || "Resume";
+
+      // Construct a clean plain text representation of all resume data
+      const textParts = [];
+      if (form.userName) textParts.push(form.userName);
+      if (form.email) textParts.push(`Email: ${form.email}`);
+      if (form.phone) textParts.push(`Phone: ${form.phone}`);
+      if (form.linkedin) textParts.push(`LinkedIn: ${form.linkedin}`);
+      if (form.github) textParts.push(`GitHub: ${form.github}`);
+      if (form.summary) textParts.push(`Summary: ${form.summary}`);
+      if (form.skills) textParts.push(`Skills: ${form.skills}`);
+
+      if (form.experience && form.experience.length > 0) {
+        textParts.push("Experience:");
+        form.experience.forEach((exp) => {
+          if (exp.company || exp.role) {
+            textParts.push(`${exp.role || ""} at ${exp.company || ""} (${exp.duration || ""})`);
+            if (exp.description) textParts.push(exp.description);
+          }
+        });
+      }
+
+      if (form.education && form.education.length > 0) {
+        textParts.push("Education:");
+        form.education.forEach((edu) => {
+          if (edu.school || edu.degree) {
+            textParts.push(`${edu.degree || ""} from ${edu.school || ""} (${edu.year || ""})`);
+          }
+        });
+      }
+
+      if (form.projects && form.projects.length > 0) {
+        textParts.push("Projects:");
+        form.projects.forEach((proj) => {
+          if (proj.name) {
+            textParts.push(`${proj.name || ""} - Tech: ${proj.techStack || ""}`);
+            if (proj.description) textParts.push(proj.description);
+          }
+        });
+      }
+
+      if (form.extra) textParts.push(form.extra);
+      const fullText = textParts.join("\n");
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `${name.replace(/\s+/g, "_")}_Resume.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+      };
+
+      await html2pdf()
+        .set(opt)
+        .from(previewRef.current)
+        .toPdf()
+        .get("pdf")
+        .then((pdf) => {
+          // Add invisible text layer on the first page
+          pdf.setPage(1);
+          pdf.setTextColor(255, 255, 255); // white text color
+          pdf.setFontSize(1); // 1 pt font size
+          
+          // Split text to fit width (180mm)
+          const splitText = pdf.splitTextToSize(fullText, 180);
+          pdf.text(splitText, 10, 10);
+        })
+        .save();
+
+      // Auto-save to database in the background when downloading PDF
+      saveToDB(true);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const saveToDB = async (silent = false) => {
+    if (!silent) setSaving(true);
+    try {
+      await axios.post(`${API_BASE}/api/resume`, {
+        ...form,
+        skills: form.skills.split(",").map((s) => s.trim()).filter(Boolean),
+      });
+      if (!silent) alert("Resume saved!");
+    } catch (err) {
+      if (!silent) alert("Failed to save resume.");
+      console.error(err);
+    } finally {
+      if (!silent) setSaving(false);
+    }
+  };
+
+  const skillsList = form.skills
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return (
+    <div>
+      {/* Page Header */}
+      <div className="page-header">
+        <h1>Resume Builder</h1>
+        <p>Fill in your details and preview your resume in real time</p>
+      </div>
+
+      <div className="container builder-layout" style={{ display: "flex", gap: "2rem", alignItems: "flex-start", paddingTop: 0 }}>
+        {/* ===== FORM PANEL ===== */}
+        <div className="card" style={{ flex: 1, minWidth: 0 }}>
+          {/* Contact Info */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div className="section-chip">👤 Personal Info</div>
+            <div className="form-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Full Name</label>
+                <input placeholder="John Doe" value={form.userName} onChange={(e) => update("userName", e.target.value)} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Email</label>
+                <input placeholder="john@example.com" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Phone</label>
+                <input placeholder="+1 (555) 000-0000" value={form.phone} onChange={(e) => update("phone", e.target.value)} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>LinkedIn URL</label>
+                <input placeholder="linkedin.com/in/johndoe" value={form.linkedin || ""} onChange={(e) => update("linkedin", e.target.value)} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0, gridColumn: "1 / -1" }}>
+                <label>GitHub URL</label>
+                <input placeholder="github.com/johndoe" value={form.github || ""} onChange={(e) => update("github", e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div className="section-chip">📝 Summary</div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Professional Summary</label>
+              <textarea placeholder="Brief overview of your skills and experience..." rows={3} value={form.summary} onChange={(e) => update("summary", e.target.value)} />
+            </div>
+          </div>
+
+          {/* Skills */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div className="section-chip">🛠️ Skills</div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Technical Skills (comma separated)</label>
+              <input placeholder="React, Node.js, Python, SQL..." value={form.skills} onChange={(e) => update("skills", e.target.value)} />
+            </div>
+          </div>
+
+          {/* Experience */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div className="section-chip">💼 Experience</div>
+            {form.experience.map((exp, i) => (
+              <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                  <input placeholder="Company" value={exp.company} onChange={(e) => updateArrayField("experience", i, "company", e.target.value)} />
+                  <input placeholder="Role / Title" value={exp.role} onChange={(e) => updateArrayField("experience", i, "role", e.target.value)} />
+                </div>
+                <input placeholder="Duration (e.g. Jan 2023 – Dec 2024)" style={{ marginBottom: "0.5rem" }} value={exp.duration} onChange={(e) => updateArrayField("experience", i, "duration", e.target.value)} />
+                <textarea placeholder="Description (each new line = a bullet point)" rows={3} value={exp.description} onChange={(e) => updateArrayField("experience", i, "description", e.target.value)} style={{ marginBottom: "0.5rem" }} />
+                <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("experience", i)}>✕ Remove</button>
+              </div>
+            ))}
+            <button className="secondary" onClick={() => addRow("experience", emptyExperience)}>+ Add Experience</button>
+          </div>
+
+          {/* Education */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div className="section-chip">🎓 Education</div>
+            {form.education.map((edu, i) => (
+              <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                  <input placeholder="School / University" value={edu.school} onChange={(e) => updateArrayField("education", i, "school", e.target.value)} />
+                  <input placeholder="Degree" value={edu.degree} onChange={(e) => updateArrayField("education", i, "degree", e.target.value)} />
+                </div>
+                <input placeholder="Graduation Year (e.g. 2024)" style={{ marginBottom: "0.5rem" }} value={edu.year} onChange={(e) => updateArrayField("education", i, "year", e.target.value)} />
+                <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("education", i)}>✕ Remove</button>
+              </div>
+            ))}
+            <button className="secondary" onClick={() => addRow("education", emptyEducation)}>+ Add Education</button>
+          </div>
+
+          {/* Projects */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div className="section-chip">🚀 Projects</div>
+            {form.projects && form.projects.map((proj, i) => (
+              <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                  <input placeholder="Project Name" value={proj.name} onChange={(e) => updateArrayField("projects", i, "name", e.target.value)} />
+                  <input placeholder="Tech Stack" value={proj.techStack} onChange={(e) => updateArrayField("projects", i, "techStack", e.target.value)} />
+                </div>
+                <input placeholder="Project Link / URL" style={{ marginBottom: "0.5rem" }} value={proj.link} onChange={(e) => updateArrayField("projects", i, "link", e.target.value)} />
+                <textarea placeholder="Description (each line = bullet point)" rows={3} value={proj.description} onChange={(e) => updateArrayField("projects", i, "description", e.target.value)} style={{ marginBottom: "0.5rem" }} />
+                <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("projects", i)}>✕ Remove</button>
+              </div>
+            ))}
+            <button className="secondary" onClick={() => addRow("projects", emptyProject)}>+ Add Project</button>
+          </div>
+
+          {/* Extra */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div className="section-chip">🏆 Extra</div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Awards, Certifications, Languages, etc.</label>
+              <textarea placeholder="e.g. AWS Certified Developer, Fluent in Spanish, Dean's List 2023..." rows={3} value={form.extra || ""} onChange={(e) => update("extra", e.target.value)} />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="builder-actions" style={{ display: "flex", gap: "0.75rem", paddingTop: "0.5rem", borderTop: "1px solid var(--border)" }}>
+            <button onClick={downloadPDF} disabled={downloading} style={{ flex: 1 }}>
+              {downloading ? "⏳ Generating PDF..." : "⬇️ Download PDF"}
+            </button>
+            <button className="secondary" onClick={saveToDB} disabled={saving} style={{ flex: 1 }}>
+              {saving ? "Saving..." : "💾 Save to Database"}
+            </button>
+            <button
+              className="secondary"
+              onClick={() => setIsTailorModalOpen(true)}
+              style={{
+                flex: 1,
+                border: "1px solid var(--accent)",
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)",
+                color: "var(--accent-light, #c084fc)"
+              }}
+            >
+              🎯 Tailor to Job
+            </button>
+          </div>
+        </div>
+
+        {/* ===== LIVE PREVIEW PANEL ===== */}
+        <div className="resume-preview-wrapper" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1.25rem", width: "100%", marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)" }}>📄 Live Preview</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Updates as you type</span>
+          </div>
+
+          {/* The Resume "Paper" — this is what gets converted to PDF */}
+          <div
+            id="resume-preview"
+            ref={previewRef}
+            style={{
+              background: "#fff",
+              color: "#1a1a1a",
+              padding: "40px 48px",
+              fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+              width: "100%",
+              maxWidth: "794px",  /* A4 width at 96dpi */
+              minHeight: "1123px", /* A4 height at 96dpi */
+              boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
+              boxSizing: "border-box",
+              borderRadius: "4px",
+              fontSize: "10pt",
+              lineHeight: "1.4",
+              overflowX: "auto",
+            }}
+          >
+            {/* Header */}
+            <div style={{ textAlign: "center", marginBottom: "20px", paddingBottom: "16px", borderBottom: "2px solid #1a1a1a" }}>
+              <h1 style={{ margin: "0 0 6px 0", fontSize: "22pt", color: "#111", textTransform: "uppercase", letterSpacing: "2px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>
+                {form.userName || "YOUR NAME"}
+              </h1>
+              <p style={{ margin: 0, fontSize: "9pt", color: "#444", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                {[form.email, form.phone, form.linkedin, form.github].filter(Boolean).join("  |  ")}
+              </p>
+            </div>
+
+            {/* Summary */}
+            {form.summary && (
+              <div style={{ marginBottom: "16px" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Summary</h3>
+                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", color: "#222", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{form.summary}</p>
+              </div>
+            )}
+
+            {/* Skills */}
+            {skillsList.length > 0 && (
+              <div style={{ marginBottom: "16px" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Skills</h3>
+                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", color: "#222" }}>
+                  {skillsList.join("  •  ")}
+                </p>
+              </div>
+            )}
+
+            {/* Experience */}
+            {form.experience.some((e) => e.company || e.role) && (
+              <div style={{ marginBottom: "16px" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Professional Experience</h3>
+                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                {form.experience.map((exp, i) => (
+                  <div key={i} style={{ marginBottom: "12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "3px" }}>
+                      <div>
+                        <strong style={{ fontSize: "10pt", color: "#111", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{exp.role}</strong>
+                        {exp.company && <span style={{ fontSize: "9.5pt", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}> — {exp.company}</span>}
+                      </div>
+                      {exp.duration && <em style={{ fontSize: "9pt", color: "#555", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{exp.duration}</em>}
+                    </div>
+                    {exp.description && (
+                      <ul style={{ margin: "0", paddingLeft: "18px", fontSize: "9.5pt", lineHeight: "1.5", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                        {exp.description.split("\n").filter((l) => l.trim()).map((line, idx) => (
+                          <li key={idx} style={{ marginBottom: "2px" }}>{line}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Education */}
+            {form.education.some((e) => e.school || e.degree) && (
+              <div style={{ marginBottom: "16px" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Education</h3>
+                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                {form.education.map((edu, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
+                    <div>
+                      <strong style={{ fontSize: "10pt", color: "#111", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{edu.school}</strong>
+                      {edu.degree && <span style={{ fontSize: "9.5pt", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}> — {edu.degree}</span>}
+                    </div>
+                    {edu.year && <span style={{ fontSize: "9pt", color: "#555", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{edu.year}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Projects */}
+            {form.projects && form.projects.some((p) => p.name) && (
+              <div style={{ marginBottom: "16px" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Projects</h3>
+                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                {form.projects.map((proj, i) => (
+                  <div key={i} style={{ marginBottom: "10px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "3px" }}>
+                      <div>
+                        <strong style={{ fontSize: "10pt", color: "#111", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{proj.name}</strong>
+                        {proj.techStack && <span style={{ fontSize: "9pt", color: "#444", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}> | {proj.techStack}</span>}
+                      </div>
+                      {proj.link && <span style={{ fontSize: "8.5pt", color: "#555", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{proj.link}</span>}
+                    </div>
+                    {proj.description && (
+                      <ul style={{ margin: "0", paddingLeft: "18px", fontSize: "9.5pt", lineHeight: "1.5", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                        {proj.description.split("\n").filter((l) => l.trim()).map((line, idx) => (
+                          <li key={idx} style={{ marginBottom: "2px" }}>{line}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Extra */}
+            {form.extra && (
+              <div>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Additional Information</h3>
+                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", whiteSpace: "pre-wrap", color: "#222", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                  {form.extra}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ===== AI TAILOR MODAL ===== */}
+      {isTailorModalOpen && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.75)",
+          backdropFilter: "blur(8px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "1rem"
+        }}>
+          <div className="card" style={{
+            maxWidth: "650px",
+            width: "100%",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            border: "1px solid var(--border)",
+            background: "var(--surface-1)",
+            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.25rem",
+            padding: "1.5rem"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "1.25rem", color: "var(--text-main)" }}>🎯 Tailor Resume with AI</h3>
+              <button className="secondary" style={{ padding: "0.25rem 0.5rem", minWidth: "auto", fontSize: "0.9rem" }} onClick={() => {
+                setIsTailorModalOpen(false);
+                setTailoredPreview(null);
+                setJobDescription("");
+              }}>✕</button>
+            </div>
+            
+            {!tailoredPreview ? (
+              <>
+                <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", margin: 0 }}>
+                  Paste the target job description below. Our AI will optimize your summary, technical skills, and experience/project descriptions to best match the job requirements.
+                </p>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Target Job Description</label>
+                  <textarea
+                    placeholder="Paste the job description here..."
+                    rows={8}
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    style={{ fontFamily: "inherit" }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
+                  <button
+                    onClick={handleTailorResume}
+                    disabled={tailoring || !jobDescription.trim()}
+                    style={{ flex: 1 }}
+                  >
+                    {tailoring ? "⏳ Optimizing Resume..." : "✨ Optimize Resume"}
+                  </button>
+                  <button
+                    className="secondary"
+                    onClick={() => setIsTailorModalOpen(false)}
+                    style={{ flex: 0.5 }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", margin: 0 }}>
+                  Here are the suggested AI optimizations. Review the updates and click <strong>Apply Changes</strong> to update your resume builder.
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem", maxHeight: "50vh", overflowY: "auto", paddingRight: "0.25rem" }}>
+                  {/* Summary Comparison */}
+                  {tailoredPreview.summary !== form.summary && (
+                    <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "0.75rem", background: "var(--surface-2)" }}>
+                      <strong style={{ fontSize: "0.85rem", color: "var(--accent)" }}>Summary Update:</strong>
+                      <div style={{ fontSize: "0.85rem", textDecoration: "line-through", color: "var(--text-muted)", marginTop: "0.25rem" }}>{form.summary}</div>
+                      <div style={{ fontSize: "0.85rem", color: "var(--text-main)", marginTop: "0.25rem", fontWeight: 500 }}>{tailoredPreview.summary}</div>
+                    </div>
+                  )}
+
+                  {/* Skills Comparison */}
+                  {tailoredPreview.skills !== form.skills && (
+                    <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "0.75rem", background: "var(--surface-2)" }}>
+                      <strong style={{ fontSize: "0.85rem", color: "var(--accent)" }}>Skills Update:</strong>
+                      <div style={{ fontSize: "0.85rem", textDecoration: "line-through", color: "var(--text-muted)", marginTop: "0.25rem" }}>{form.skills}</div>
+                      <div style={{ fontSize: "0.85rem", color: "var(--text-main)", marginTop: "0.25rem", fontWeight: 500 }}>{tailoredPreview.skills}</div>
+                    </div>
+                  )}
+
+                  {/* Experience Comparison */}
+                  <div style={{ border: "1px solid var(--border)", borderRadius: "6px", padding: "0.75rem", background: "var(--surface-2)" }}>
+                    <strong style={{ fontSize: "0.85rem", color: "var(--accent)" }}>Experience & Projects Updates:</strong>
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: "0.25rem 0" }}>Work and project histories have been aligned to highlight relevant tools/responsibilities.</p>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
+                  <button
+                    onClick={applyTailoredResume}
+                    style={{ flex: 1 }}
+                  >
+                    ✅ Apply Changes
+                  </button>
+                  <button
+                    className="secondary"
+                    onClick={() => setTailoredPreview(null)}
+                    style={{ flex: 0.5 }}
+                  >
+                    Back
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
