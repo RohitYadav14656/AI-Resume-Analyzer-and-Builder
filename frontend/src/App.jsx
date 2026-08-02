@@ -571,6 +571,44 @@ function HeroPage({ navigate }) {
             </p>
           </motion.div>
         </div>
+      {/* HOW IT WORKS */}
+      <section style={{ padding: "4rem 2rem 5rem", background: "var(--surface-2)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
+        <div className="container">
+          <div className="section-header" style={{ marginBottom: "3rem" }}>
+            <span className="section-label" style={{ color: "var(--accent)" }}>Simple Process</span>
+            <h2 className="section-title">How ResumeAI Works in 3 Steps</h2>
+            <p className="section-subtitle">
+              From raw draft to recruiter-ready resume in less than two minutes.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2rem", maxWidth: "1100px", margin: "0 auto" }}>
+            <motion.div whileHover={{ y: -6 }} className="card glass-panel" style={{ padding: "2rem", textAlign: "center" }}>
+              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "var(--accent)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "1.2rem", margin: "0 auto 1.25rem", boxShadow: "0 4px 15px rgba(217, 119, 6, 0.3)" }}>1</div>
+              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Enter Your Background</h3>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: "1.6" }}>
+                Fill in your education, experience, and skills in our intuitive builder — or upload an existing resume file directly.
+              </p>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -6 }} className="card glass-panel" style={{ padding: "2rem", textAlign: "center" }}>
+              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "var(--primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "1.2rem", margin: "0 auto 1.25rem", boxShadow: "0 4px 15px rgba(46, 37, 32, 0.2)" }}>2</div>
+              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Instant AI Score & Audit</h3>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: "1.6" }}>
+                Our AI inspects formatting, ATS compatibility, bullet impact, and job keyword alignment in seconds.
+              </p>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -6 }} className="card glass-panel" style={{ padding: "2rem", textAlign: "center" }}>
+              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#10b981", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "1.2rem", margin: "0 auto 1.25rem", boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)" }}>3</div>
+              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>1-Click Tailor & Export</h3>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: "1.6" }}>
+                Apply AI suggestions with a single click and download a clean, text-readable PDF engineered to pass screening filters.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
       </section>
 
       {/* CTA */}

@@ -115,6 +115,9 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setResult(res.data.analysis);
+      setTimeout(() => {
+        document.getElementById("analysis-result-section")?.scrollIntoView({ behavior: "smooth" });
+      }, 150);
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || "Something went wrong analyzing your resume.");
     } finally {
@@ -148,6 +151,9 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
       });
       if (res.data && res.data.success && res.data.tailoredResume) {
         setTailoredResult(res.data.tailoredResume);
+        setTimeout(() => {
+          document.getElementById("tailored-result-section")?.scrollIntoView({ behavior: "smooth" });
+        }, 150);
       } else {
         setError("Unexpected response from tailoring service.");
       }
@@ -338,7 +344,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
 
         {/* Results */}
         {result && !loading && (
-          <div className="card animate-in" style={{ maxWidth: 760, margin: "0 auto 2rem" }}>
+          <div id="analysis-result-section" className="card animate-in" style={{ maxWidth: 760, margin: "0 auto 2rem" }}>
             {result.rawResponse ? (
               <>
                 <div className="section-chip" style={{ marginBottom: "1rem" }}>📊 Analysis Result</div>
@@ -412,7 +418,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
 
         {/* Tailored Result Card */}
         {tailoredResult && !loading && (
-          <div className="card animate-in" style={{ maxWidth: 760, margin: "0 auto 2rem" }}>
+          <div id="tailored-result-section" className="card animate-in" style={{ maxWidth: 760, margin: "0 auto 2rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
               <div>
                 <div className="section-chip" style={{ marginBottom: "0.5rem" }}>🎯 AI Tailored Resume</div>

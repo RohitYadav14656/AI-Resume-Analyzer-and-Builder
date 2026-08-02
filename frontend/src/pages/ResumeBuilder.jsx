@@ -508,6 +508,13 @@ export default function ResumeBuilder({ form, setForm }) {
       <div className="page-header">
         <h1>Resume Builder</h1>
         <p>Fill in your details and preview your resume in real time</p>
+        <button
+          className="secondary"
+          onClick={() => document.getElementById("resume-preview-section")?.scrollIntoView({ behavior: "smooth" })}
+          style={{ marginTop: "0.75rem", padding: "0.4rem 1rem", fontSize: "0.85rem", borderRadius: "999px" }}
+        >
+          👁️ Check Updated Resume ↓
+        </button>
       </div>
 
       <div className="container builder-layout" style={{ display: "flex", gap: "2rem", alignItems: "flex-start", paddingTop: 0 }}>
@@ -687,6 +694,13 @@ export default function ResumeBuilder({ form, setForm }) {
 
           {/* Actions */}
           <div className="builder-actions btn-group-responsive" style={{ paddingTop: "0.5rem", borderTop: "1px solid var(--border)" }}>
+            <button
+              className="secondary"
+              onClick={() => document.getElementById("resume-preview-section")?.scrollIntoView({ behavior: "smooth" })}
+              style={{ flex: 1 }}
+            >
+              👁️ Check Resume ↓
+            </button>
             <button onClick={downloadPDF} disabled={downloading} style={{ flex: 1 }}>
               {downloading ? "⏳ Generating PDF..." : "⬇️ Download PDF"}
             </button>
@@ -709,10 +723,20 @@ export default function ResumeBuilder({ form, setForm }) {
         </div>
 
         {/* ===== LIVE PREVIEW PANEL ===== */}
-        <div className="resume-preview-wrapper" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div id="resume-preview-section" className="resume-preview-wrapper" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1.25rem", width: "100%", marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)" }}>📄 Live Preview</span>
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Updates as you type</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Updates as you type</span>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                style={{ fontSize: "0.75rem", padding: "0.25rem 0.6rem", borderRadius: "6px" }}
+              >
+                ↑ Back to Editor
+              </button>
+            </div>
           </div>
 
           {/* The Resume "Paper" — this is what gets converted to PDF */}
