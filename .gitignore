@@ -35,3 +35,8 @@ backend/uploads/*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Load testing scripts
+k6-loadtest.js
+loadtest-node.js
+
