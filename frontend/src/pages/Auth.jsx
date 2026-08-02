@@ -197,7 +197,7 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
   // ═══════════════════════════════════════════════════════════════════════════
   if (verificationPending) {
     return (
-      <div className="container animate-in" style={{ maxWidth: "480px", margin: "4rem auto 6rem", padding: "0 1.5rem" }}>
+      <div className="container animate-in" style={{ maxWidth: "480px", margin: "4rem auto 6rem" }}>
         <motion.div
           className="card glass-panel"
           style={{ padding: "2.5rem 2rem" }}
@@ -326,7 +326,7 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
   // MAIN AUTH PANEL
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="container animate-in" style={{ maxWidth: "480px", margin: "4rem auto 6rem", padding: "0 1.5rem" }}>
+    <div className="container animate-in" style={{ maxWidth: "480px", margin: "4rem auto 6rem" }}>
       <div className="card glass-panel" style={{ padding: "2.5rem 2rem", position: "relative" }}>
 
         {/* Toggle Header */}

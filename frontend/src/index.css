@@ -63,6 +63,17 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  width: 100%;
+}
+
+h1, h2, h3, h4, h5, p, span, a, label, button, input, textarea, select {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+img, svg, canvas, video {
+  max-width: 100%;
+  height: auto;
 }
 
 /* ============ TYPOGRAPHY ============ */
@@ -78,9 +89,10 @@ p {
   line-height: 1.7;
 }
 
-/* ============ LAYOUT ============ */
+/* ============ LAYOUT & UTILITIES ============ */
 .container {
   max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem 2rem;
 }
@@ -92,6 +104,19 @@ p {
   padding: 1.75rem;
   border: 1px solid var(--border);
   transition: var(--transition);
+  max-width: 100%;
+}
+
+.form-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.btn-group-responsive {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 /* ============ INPUTS & FORMS ============ */
@@ -340,6 +365,9 @@ button.secondary:hover::after {
   top: 68px;
   left: 0;
   right: 0;
+  max-height: calc(100vh - 68px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -907,7 +935,52 @@ button.secondary:hover::after {
   }
 }
 
-/* ============ RESPONSIVE ============ */
+/* ============ RESPONSIVE BREAKPOINTS ============ */
+
+/* ----- Ultrawide Displays: 1920px+ ----- */
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1536px;
+  }
+
+  .hero-grid-split {
+    max-width: 1536px;
+    gap: 6rem;
+  }
+
+  .features-grid {
+    max-width: 1360px;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ----- Desktop & Laptops: 1025px - 1440px ----- */
+@media (min-width: 1025px) and (max-width: 1440px) {
+  .hero-grid-split {
+    gap: 3rem;
+  }
+}
+
+/* ----- Mid-Desktop & Laptops (769px - 1024px) ----- */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .navbar {
+    padding: 0 1.25rem;
+  }
+
+  .nav-link {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.85rem;
+  }
+
+  .navbar-actions {
+    gap: 0.5rem;
+  }
+
+  .navbar-actions .btn-nav {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.8rem;
+  }
+}
 
 /* ----- Tablet: 1024px ----- */
 @media (max-width: 1024px) {
@@ -938,9 +1011,9 @@ button.secondary:hover::after {
     text-align: center;
   }
 
-  /* Hide the 3D canvas on tablet since it stacks under text and takes too much height */
   .hero-3d-container {
     min-height: 350px !important;
+    max-height: 450px;
   }
 
   /* Builder: stack form + preview vertically */
@@ -949,7 +1022,7 @@ button.secondary:hover::after {
   }
 }
 
-/* ----- Mobile: 768px ----- */
+/* ----- Mobile & Small Tablet: 768px ----- */
 @media (max-width: 768px) {
   /* Navbar */
   .navbar {
@@ -972,6 +1045,7 @@ button.secondary:hover::after {
 
   .mobile-menu {
     top: 60px;
+    max-height: calc(100vh - 60px);
   }
 
   /* Hero */
@@ -1089,10 +1163,26 @@ button.secondary:hover::after {
   }
 }
 
+/* ----- Mobile: 576px ----- */
+@media (max-width: 576px) {
+  .btn-group-responsive {
+    flex-direction: column !important;
+  }
+
+  .btn-group-responsive > button,
+  .btn-group-responsive > * {
+    width: 100% !important;
+  }
+}
+
 /* ----- Small Mobile: 480px ----- */
 @media (max-width: 480px) {
+  .container {
+    padding: 1rem 0.85rem;
+  }
+
   .hero-title {
-    font-size: clamp(1.8rem, 9vw, 2.6rem);
+    font-size: clamp(1.75rem, 8.5vw, 2.5rem);
   }
 
   .hero-subtitle {
@@ -1118,7 +1208,7 @@ button.secondary:hover::after {
   }
 
   .stat-item {
-    min-width: 100px;
+    min-width: 90px;
     text-align: center !important;
   }
 
@@ -1139,7 +1229,6 @@ button.secondary:hover::after {
     width: 100%;
   }
 
-  /* Tabs in analyzer collapse buttons */
   .section-chip {
     font-size: 0.7rem;
     padding: 0.15rem 0.55rem;
@@ -1150,15 +1239,15 @@ button.secondary:hover::after {
   }
 
   .cta-section {
-    padding: 3rem 1.25rem;
+    padding: 3rem 1rem;
   }
 
   .cta-title {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
 
   .cta-subtitle {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 
   /* Make action buttons in builder stack */
@@ -1169,33 +1258,48 @@ button.secondary:hover::after {
 
   /* Resume preview: make it scrollable/zoomable on mobile */
   .resume-preview-wrapper {
+    width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   #resume-preview {
-    min-width: 680px;
+    min-width: 580px;
     font-size: 9pt !important;
+    padding: 24px 28px !important;
   }
 
-  /* Make the preview panel not sticky on mobile */
   .preview-sticky {
     position: static !important;
   }
 }
 
-/* ----- Very small: 360px ----- */
-@media (max-width: 360px) {
+/* ----- Extra Small Mobile: 360px & 320px ----- */
+@media (max-width: 375px) {
+  .container {
+    padding: 0.85rem 0.65rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
   .hero-title {
-    font-size: 1.7rem;
+    font-size: clamp(1.5rem, 8vw, 2.1rem);
   }
 
   .hero-badge {
     font-size: 0.65rem;
+    padding: 0.25rem 0.65rem;
   }
 
   .navbar-brand {
-    font-size: 1rem;
+    font-size: 0.95rem;
+  }
+
+  #resume-preview {
+    min-width: 480px;
+    padding: 16px 16px !important;
   }
 }
 

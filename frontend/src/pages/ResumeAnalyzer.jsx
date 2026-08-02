@@ -276,7 +276,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
             />
           </div>
 
-          <div style={{ display: "flex", gap: "0.75rem" }}>
+          <div className="btn-group-responsive">
             <button
               style={{ flex: 1, padding: "0.9rem", fontSize: "1rem" }}
               onClick={handleAnalyze}
@@ -420,7 +420,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                   This tailored version is fully optimized for the job description.
                 </p>
               </div>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
+              <div className="btn-group-responsive">
                 <button
                   onClick={downloadTailoredPDF}
                   disabled={downloadingTailored}

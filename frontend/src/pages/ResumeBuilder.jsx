@@ -73,6 +73,8 @@ function AISuggestionButton({ field, currentText, role, skills, onSelect }) {
           zIndex: 10000,
           maxWidth: "500px",
           width: "90%",
+          maxHeight: "85vh",
+          overflowY: "auto",
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <span style={{ fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -208,6 +210,8 @@ function AIGrammarFixButton({ currentText, onSelect }) {
           zIndex: 10000,
           maxWidth: "500px",
           width: "90%",
+          maxHeight: "85vh",
+          overflowY: "auto",
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <span style={{ fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -581,7 +585,7 @@ export default function ResumeBuilder({ form, setForm }) {
             <div className="section-chip">💼 Experience</div>
             {form.experience.map((exp, i) => (
               <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
                   <input placeholder="Company" value={exp.company} onChange={(e) => updateArrayField("experience", i, "company", e.target.value)} />
                   <input placeholder="Role / Title" value={exp.role} onChange={(e) => updateArrayField("experience", i, "role", e.target.value)} />
                 </div>
@@ -613,7 +617,7 @@ export default function ResumeBuilder({ form, setForm }) {
             <div className="section-chip">🎓 Education</div>
             {form.education.map((edu, i) => (
               <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
                   <input placeholder="School / University" value={edu.school} onChange={(e) => updateArrayField("education", i, "school", e.target.value)} />
                   <input placeholder="Degree" value={edu.degree} onChange={(e) => updateArrayField("education", i, "degree", e.target.value)} />
                 </div>
@@ -629,7 +633,7 @@ export default function ResumeBuilder({ form, setForm }) {
             <div className="section-chip">🚀 Projects</div>
             {form.projects && form.projects.map((proj, i) => (
               <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
                   <input placeholder="Project Name" value={proj.name} onChange={(e) => updateArrayField("projects", i, "name", e.target.value)} />
                   <input placeholder="Tech Stack" value={proj.techStack} onChange={(e) => updateArrayField("projects", i, "techStack", e.target.value)} />
                 </div>
@@ -682,7 +686,7 @@ export default function ResumeBuilder({ form, setForm }) {
           </div>
 
           {/* Actions */}
-          <div className="builder-actions" style={{ display: "flex", gap: "0.75rem", paddingTop: "0.5rem", borderTop: "1px solid var(--border)" }}>
+          <div className="builder-actions btn-group-responsive" style={{ paddingTop: "0.5rem", borderTop: "1px solid var(--border)" }}>
             <button onClick={downloadPDF} disabled={downloading} style={{ flex: 1 }}>
               {downloading ? "⏳ Generating PDF..." : "⬇️ Download PDF"}
             </button>

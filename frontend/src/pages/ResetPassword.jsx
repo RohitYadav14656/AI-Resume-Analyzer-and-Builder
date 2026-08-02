@@ -68,7 +68,7 @@ export default function ResetPassword({ token, onGoToLogin }) {
   return (
     <div
       className="container animate-in"
-      style={{ maxWidth: "460px", margin: "4rem auto 6rem", padding: "0 1.5rem" }}
+      style={{ maxWidth: "460px", margin: "4rem auto 6rem" }}
     >
       <div className="card glass-panel" style={{ padding: "2.5rem 2rem" }}>
         {/* Header Icon */}

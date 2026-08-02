@@ -413,19 +413,19 @@ function HeroPage({ navigate }) {
               AI-Powered Resume Intelligence
             </div>
 
-            <h1 className="hero-title" style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)" }}>
+            <h1 className="hero-title">
               Build Resumes That<br />
               <span className="gradient-text" style={{ background: "linear-gradient(135deg, var(--accent) 0%, #d97706 50%, #f59e0b 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                 Actually Get You Hired
               </span>
             </h1>
 
-            <p className="hero-subtitle" style={{ marginLeft: 0 }}>
+            <p className="hero-subtitle">
               Create professional, ATS-optimized resumes in minutes — then let our AI
               analyze every detail and give you a real score before you apply.
             </p>
 
-            <div className="hero-actions" style={{ justifyContent: "flex-start", gap: "1rem" }}>
+            <div className="hero-actions" style={{ gap: "1rem" }}>
               <button 
                 className="glow-btn" 
                 style={{ padding: "0.9rem 2.2rem", fontSize: "1rem", borderRadius: "16px", fontWeight: "700" }} 
@@ -455,20 +455,20 @@ function HeroPage({ navigate }) {
               </div>
             )}
 
-            <div className="hero-stats" style={{ justifyContent: "flex-start", marginTop: "3rem" }}>
-              <div className="stat-item" style={{ textAlign: "left" }}>
+            <div className="hero-stats" style={{ marginTop: "3rem" }}>
+              <div className="stat-item">
                 <div className="stat-number" style={{ color: "var(--accent)" }}>
                   <CountUp end={98} duration={2} suffix="%" />
                 </div>
                 <div className="stat-label">ATS Pass Rate</div>
               </div>
-              <div className="stat-item" style={{ textAlign: "left" }}>
+              <div className="stat-item">
                 <div className="stat-number" style={{ color: "var(--accent)" }}>
                   <CountUp end={2} duration={1.5} suffix=" min" />
                 </div>
                 <div className="stat-label">Avg. Build Time</div>
               </div>
-              <div className="stat-item" style={{ textAlign: "left" }}>
+              <div className="stat-item">
                 <div className="stat-number" style={{ color: "var(--accent)", display: "flex", alignItems: "center", gap: "0.25rem" }}>
                   <span>AI</span>
                   <LottieIcon type="success" width={24} height={24} loop={false} />
@@ -486,7 +486,7 @@ function HeroPage({ navigate }) {
             className="hero-3d-container"
             style={{ position: "relative", width: "100%", height: "100%" }}
           >
-            <div style={{ height: "100%", minHeight: "500px", width: "100%" }}>
+            <div style={{ height: "100%", width: "100%" }}>
               <ResumeScene3D />
             </div>
           </motion.div>

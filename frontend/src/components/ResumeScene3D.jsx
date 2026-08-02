@@ -179,7 +179,7 @@ function AIParticles() {
 
 export default function ResumeScene3D() {
   return (
-    <div style={{ width: "100%", height: "100%", minHeight: "500px", position: "relative" }}>
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <Canvas
         camera={{ position: [0, 0, 7.5], fov: 45 }}
         gl={{ antialias: true, alpha: true }}
