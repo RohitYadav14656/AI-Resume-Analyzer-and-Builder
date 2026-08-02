@@ -318,9 +318,27 @@ function AIGrammarFixButton({ currentText, onSelect }) {
   );
 }
 
+export const RESUME_THEMES = [
+  { id: "amber", name: "Warm Amber", accent: "#d97706", header: "#2e2520", border: "#f59e0b" },
+  { id: "navy", name: "Executive Navy", accent: "#1e40af", header: "#0f172a", border: "#3b82f6" },
+  { id: "emerald", name: "Emerald Tech", accent: "#059669", header: "#064e3b", border: "#10b981" },
+  { id: "slate", name: "Minimal Slate", accent: "#475569", header: "#1e293b", border: "#64748b" },
+  { id: "crimson", name: "Crimson Ruby", accent: "#be123c", header: "#4c0519", border: "#f43f5e" },
+  { id: "amethyst", name: "Royal Violet", accent: "#7c3aed", header: "#3b0764", border: "#8b5cf6" },
+];
+
+export const RESUME_FONTS = [
+  { id: "sans", name: "Classic Sans", value: "'Helvetica Neue', Helvetica, Arial, sans-serif" },
+  { id: "inter", name: "Modern Inter", value: "'Inter', system-ui, -apple-system, sans-serif" },
+  { id: "serif", name: "Executive Serif", value: "Georgia, 'Times New Roman', Times, serif" },
+];
+
 export default function ResumeBuilder({ form, setForm }) {
   const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [checkingGrammar, setCheckingGrammar] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState(RESUME_THEMES[0]);
+  const [selectedFont, setSelectedFont] = useState(RESUME_FONTS[0]);
   const previewRef = useRef(null);
 
   const [isTailorModalOpen, setIsTailorModalOpen] = useState(false);
@@ -446,12 +464,12 @@ export default function ResumeBuilder({ form, setForm }) {
       const fullText = textParts.join("\n");
 
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: 0,
         filename: `${name.replace(/\s+/g, "_")}_Resume.pdf`,
         image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 794 },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+        pagebreak: { mode: ["avoid-all", "css"] },
       };
 
       await html2pdf()
@@ -478,6 +496,26 @@ export default function ResumeBuilder({ form, setForm }) {
       alert("Failed to generate PDF. Please try again.");
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handleCheckGrammar = async () => {
+    setCheckingGrammar(true);
+    try {
+      const res = await api.post("/api/analyze/check-grammar", { resumeData: form });
+      if (res.data.correctedData) {
+        setForm((prev) => ({
+          ...prev,
+          ...res.data.correctedData,
+        }));
+      }
+      const fixes = res.data.improvements?.join("\n• ") || "Polished spelling, grammar, and action verbs!";
+      alert(`✨ Grammar & Tone Check Completed!\n\nImprovements applied:\n• ${fixes}`);
+    } catch (err) {
+      console.error(err);
+      alert("Grammar check failed. Please try again.");
+    } finally {
+      setCheckingGrammar(false);
     }
   };
 
@@ -509,7 +547,7 @@ export default function ResumeBuilder({ form, setForm }) {
         <h1>Resume Builder</h1>
         <p>Fill in your details and preview your resume in real time</p>
         <button
-          className="secondary"
+          className="secondary mobile-only-btn"
           onClick={() => {
             const el = document.getElementById("resume-preview-section");
             if (el) {
@@ -519,7 +557,7 @@ export default function ResumeBuilder({ form, setForm }) {
           }}
           style={{ marginTop: "0.75rem", padding: "0.4rem 1rem", fontSize: "0.85rem", borderRadius: "999px" }}
         >
-          👁️ Check Updated Resume ↓
+          👁️ Check Resume ↓
         </button>
       </div>
 
@@ -701,7 +739,7 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Actions */}
           <div className="builder-actions btn-group-responsive" style={{ paddingTop: "0.5rem", borderTop: "1px solid var(--border)" }}>
             <button
-              className="secondary"
+              className="secondary mobile-only-btn"
               onClick={() => {
                 const el = document.getElementById("resume-preview-section");
                 if (el) {
@@ -721,6 +759,20 @@ export default function ResumeBuilder({ form, setForm }) {
             </button>
             <button
               className="secondary"
+              onClick={handleCheckGrammar}
+              disabled={checkingGrammar}
+              style={{
+                flex: 1,
+                border: "1px solid #10b981",
+                background: "rgba(16, 185, 129, 0.12)",
+                color: "#10b981",
+                fontWeight: 600
+              }}
+            >
+              {checkingGrammar ? "✨ Proofreading..." : "📝 Check Grammar"}
+            </button>
+            <button
+              className="secondary"
               onClick={() => setIsTailorModalOpen(true)}
               style={{
                 flex: 1,
@@ -736,8 +788,11 @@ export default function ResumeBuilder({ form, setForm }) {
 
         {/* ===== LIVE PREVIEW PANEL ===== */}
         <div id="resume-preview-section" className="resume-preview-wrapper" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1.25rem", width: "100%", marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)" }}>📄 Live Preview</span>
+          {/* Header bar */}
+          <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1rem 1.25rem", width: "100%", marginBottom: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              📄 Live Preview
+            </span>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Updates as you type</span>
               <button
@@ -751,6 +806,74 @@ export default function ResumeBuilder({ form, setForm }) {
             </div>
           </div>
 
+          {/* Theme & Palette Customization Bar */}
+          <div style={{
+            background: "var(--surface-2)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-lg)",
+            padding: "0.9rem 1.25rem",
+            width: "100%",
+            marginBottom: "1rem",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "0.75rem"
+          }}>
+            {/* Color Palette Swatches */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>Theme:</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                {RESUME_THEMES.map((theme) => (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setSelectedTheme(theme)}
+                    title={theme.name}
+                    style={{
+                      width: "26px",
+                      height: "26px",
+                      borderRadius: "50%",
+                      background: theme.accent,
+                      border: selectedTheme.id === theme.id ? "2px solid var(--text-main)" : "2px solid #fff",
+                      boxShadow: selectedTheme.id === theme.id ? `0 0 0 2px ${theme.accent}` : "0 2px 4px rgba(0,0,0,0.15)",
+                      cursor: "pointer",
+                      padding: 0,
+                      transition: "all 0.15s ease",
+                      transform: selectedTheme.id === theme.id ? "scale(1.15)" : "scale(1)",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Font Selector Buttons */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>Font:</span>
+              {RESUME_FONTS.map((font) => (
+                <button
+                  key={font.id}
+                  type="button"
+                  onClick={() => setSelectedFont(font)}
+                  style={{
+                    padding: "0.25rem 0.6rem",
+                    fontSize: "0.75rem",
+                    borderRadius: "6px",
+                    fontWeight: 600,
+                    fontFamily: font.value,
+                    background: selectedFont.id === font.id ? "var(--accent)" : "var(--surface)",
+                    color: selectedFont.id === font.id ? "white" : "var(--text-main)",
+                    border: "1px solid var(--border)",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  {font.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* The Resume "Paper" — this is what gets converted to PDF */}
           <div
             id="resume-preview"
@@ -759,7 +882,7 @@ export default function ResumeBuilder({ form, setForm }) {
               background: "#fff",
               color: "#1a1a1a",
               padding: "40px 48px",
-              fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+              fontFamily: selectedFont.value,
               width: "100%",
               maxWidth: "794px",  /* A4 width at 96dpi */
               minHeight: "1123px", /* A4 height at 96dpi */
@@ -772,11 +895,11 @@ export default function ResumeBuilder({ form, setForm }) {
             }}
           >
             {/* Header */}
-            <div style={{ textAlign: "center", marginBottom: "20px", paddingBottom: "16px", borderBottom: "2px solid #1a1a1a" }}>
-              <h1 style={{ margin: "0 0 6px 0", fontSize: "22pt", color: "#111", textTransform: "uppercase", letterSpacing: "2px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>
+            <div style={{ textAlign: "center", marginBottom: "20px", paddingBottom: "16px", borderBottom: `2.5px solid ${selectedTheme.accent}` }}>
+              <h1 style={{ margin: "0 0 6px 0", fontSize: "22pt", color: selectedTheme.header, textTransform: "uppercase", letterSpacing: "2px", fontFamily: selectedFont.value, fontWeight: 700 }}>
                 {form.userName || "YOUR NAME"}
               </h1>
-              <p style={{ margin: 0, fontSize: "9pt", color: "#444", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+              <p style={{ margin: 0, fontSize: "9pt", color: "#444", fontFamily: selectedFont.value }}>
                 {[form.email, form.phone, form.linkedin, form.github].filter(Boolean).join("  |  ")}
               </p>
             </div>
@@ -784,18 +907,18 @@ export default function ResumeBuilder({ form, setForm }) {
             {/* Summary */}
             {form.summary && (
               <div style={{ marginBottom: "16px" }}>
-                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Summary</h3>
-                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
-                <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", color: "#222", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{form.summary}</p>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.5px", fontFamily: selectedFont.value, fontWeight: 700 }}>Summary</h3>
+                <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "8px" }} />
+                <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", color: "#222", fontFamily: selectedFont.value }}>{form.summary}</p>
               </div>
             )}
 
             {/* Skills */}
             {skillsList.length > 0 && (
               <div style={{ marginBottom: "16px" }}>
-                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Skills</h3>
-                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
-                <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", color: "#222" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.5px", fontFamily: selectedFont.value, fontWeight: 700 }}>Skills</h3>
+                <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "8px" }} />
+                <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", fontFamily: selectedFont.value, color: "#222" }}>
                   {skillsList.join("  •  ")}
                 </p>
               </div>
@@ -804,19 +927,19 @@ export default function ResumeBuilder({ form, setForm }) {
             {/* Experience */}
             {form.experience.some((e) => e.company || e.role) && (
               <div style={{ marginBottom: "16px" }}>
-                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Professional Experience</h3>
-                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.5px", fontFamily: selectedFont.value, fontWeight: 700 }}>Professional Experience</h3>
+                <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "8px" }} />
                 {form.experience.map((exp, i) => (
                   <div key={i} style={{ marginBottom: "12px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "3px" }}>
                       <div>
-                        <strong style={{ fontSize: "10pt", color: "#111", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{exp.role}</strong>
-                        {exp.company && <span style={{ fontSize: "9.5pt", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}> — {exp.company}</span>}
+                        <strong style={{ fontSize: "10pt", color: selectedTheme.header, fontFamily: selectedFont.value }}>{exp.role}</strong>
+                        {exp.company && <span style={{ fontSize: "9.5pt", color: "#333", fontFamily: selectedFont.value }}> — {exp.company}</span>}
                       </div>
-                      {exp.duration && <em style={{ fontSize: "9pt", color: "#555", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{exp.duration}</em>}
+                      {exp.duration && <em style={{ fontSize: "9pt", color: "#555", fontFamily: selectedFont.value }}>{exp.duration}</em>}
                     </div>
                     {exp.description && (
-                      <ul style={{ margin: "0", paddingLeft: "18px", fontSize: "9.5pt", lineHeight: "1.5", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                      <ul style={{ margin: "0", paddingLeft: "18px", fontSize: "9.5pt", lineHeight: "1.5", color: "#333", fontFamily: selectedFont.value }}>
                         {exp.description.split("\n").filter((l) => l.trim()).map((line, idx) => (
                           <li key={idx} style={{ marginBottom: "2px" }}>{line}</li>
                         ))}
@@ -830,15 +953,15 @@ export default function ResumeBuilder({ form, setForm }) {
             {/* Education */}
             {form.education.some((e) => e.school || e.degree) && (
               <div style={{ marginBottom: "16px" }}>
-                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Education</h3>
-                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.5px", fontFamily: selectedFont.value, fontWeight: 700 }}>Education</h3>
+                <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "8px" }} />
                 {form.education.map((edu, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
                     <div>
-                      <strong style={{ fontSize: "10pt", color: "#111", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{edu.school}</strong>
-                      {edu.degree && <span style={{ fontSize: "9.5pt", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}> — {edu.degree}</span>}
+                      <strong style={{ fontSize: "10pt", color: selectedTheme.header, fontFamily: selectedFont.value }}>{edu.school}</strong>
+                      {edu.degree && <span style={{ fontSize: "9.5pt", color: "#333", fontFamily: selectedFont.value }}> — {edu.degree}</span>}
                     </div>
-                    {edu.year && <span style={{ fontSize: "9pt", color: "#555", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{edu.year}</span>}
+                    {edu.year && <span style={{ fontSize: "9pt", color: "#555", fontFamily: selectedFont.value }}>{edu.year}</span>}
                   </div>
                 ))}
               </div>
@@ -846,22 +969,26 @@ export default function ResumeBuilder({ form, setForm }) {
 
             {/* Projects */}
             {form.projects && form.projects.some((p) => p.name) && (
-              <div style={{ marginBottom: "16px" }}>
-                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Projects</h3>
-                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+              <div style={{ marginBottom: "12px" }}>
+                <h3 style={{ margin: "0 0 3px 0", fontSize: "9.5pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.2px", fontFamily: selectedFont.value, fontWeight: 700 }}>Projects</h3>
+                <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "6px" }} />
                 {form.projects.map((proj, i) => (
-                  <div key={i} style={{ marginBottom: "10px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "3px" }}>
+                  <div key={i} style={{ marginBottom: "8px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "2px" }}>
                       <div>
-                        <strong style={{ fontSize: "10pt", color: "#111", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{proj.name}</strong>
-                        {proj.techStack && <span style={{ fontSize: "9pt", color: "#444", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}> | {proj.techStack}</span>}
+                        <strong style={{ fontSize: "9.5pt", color: selectedTheme.header, fontFamily: selectedFont.value }}>{proj.name}</strong>
+                        {proj.techStack && <span style={{ fontSize: "9pt", color: "#444", fontFamily: selectedFont.value }}> | {proj.techStack}</span>}
                       </div>
-                      {proj.link && <span style={{ fontSize: "8.5pt", color: "#555", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{proj.link}</span>}
                     </div>
+                    {proj.link && (
+                      <div style={{ fontSize: "8.5pt", color: selectedTheme.accent, marginBottom: "2px", fontFamily: selectedFont.value, fontWeight: 500 }}>
+                        🔗 <a href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`} target="_blank" rel="noreferrer" style={{ color: selectedTheme.accent, textDecoration: "underline" }}>{proj.link}</a>
+                      </div>
+                    )}
                     {proj.description && (
-                      <ul style={{ margin: "0", paddingLeft: "18px", fontSize: "9.5pt", lineHeight: "1.5", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                      <ul style={{ margin: "0", paddingLeft: "16px", fontSize: "9pt", lineHeight: "1.35", color: "#333", fontFamily: selectedFont.value }}>
                         {proj.description.split("\n").filter((l) => l.trim()).map((line, idx) => (
-                          <li key={idx} style={{ marginBottom: "2px" }}>{line}</li>
+                          <li key={idx} style={{ marginBottom: "1.5px" }}>{line}</li>
                         ))}
                       </ul>
                     )}
@@ -873,9 +1000,9 @@ export default function ResumeBuilder({ form, setForm }) {
             {/* Extra */}
             {form.extra && (
               <div>
-                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Additional Information</h3>
-                <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
-                <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", whiteSpace: "pre-wrap", color: "#222", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.5px", fontFamily: selectedFont.value, fontWeight: 700 }}>Additional Information</h3>
+                <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "8px" }} />
+                <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", whiteSpace: "pre-wrap", color: "#222", fontFamily: selectedFont.value }}>
                   {form.extra}
                 </p>
               </div>

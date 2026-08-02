@@ -9,6 +9,7 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
@@ -53,17 +54,31 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError("Please enter a valid email address (e.g., name@example.com).");
+      return;
+    }
+
+    // Password validation
+    if (!password || password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
-      const payload = isLogin ? { email, password } : { name, email, password };
+      const payload = isLogin ? { email: email.trim(), password } : { name: name.trim(), email: email.trim(), password };
 
       const response = await api.post(endpoint, payload);
 
       if (response.data.requiresVerification) {
         // Registration complete but email not yet verified
-        setVerificationEmail(email);
+        setVerificationEmail(email.trim());
         setVerificationPending(true);
         return;
       }
@@ -74,13 +89,18 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
       }, 900);
     } catch (err) {
       const data = err.response?.data;
+      const status = err.response?.status;
       // Login blocked by unverified email
       if (data?.requiresVerification) {
-        setVerificationEmail(email);
+        setVerificationEmail(email.trim());
         setVerificationPending(true);
         return;
       }
-      setError(data?.error || "Something went wrong. Please try again.");
+      if (status === 401 || (data?.error && data.error.toLowerCase().includes("invalid"))) {
+        setError("Invalid email or password. Please check your credentials and try again.");
+      } else {
+        setError(data?.error || "Something went wrong. Please check your details and try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -484,7 +504,16 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Email Address</label>
-                  <input type="email" placeholder="john@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
+                  <input
+                    type="email"
+                    placeholder="john@example.com"
+                    value={email}
+                    onChange={e => { setEmail(e.target.value); setError(""); }}
+                    style={{
+                      borderColor: error ? "var(--danger)" : undefined
+                    }}
+                    required
+                  />
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
@@ -503,7 +532,41 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
                       </button>
                     )}
                   </div>
-                  <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={e => { setPassword(e.target.value); setError(""); }}
+                      style={{
+                        width: "100%",
+                        paddingRight: "2.75rem",
+                        borderColor: error ? "var(--danger)" : undefined
+                      }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      title={showPassword ? "Hide password" : "Show password"}
+                      style={{
+                        position: "absolute",
+                        right: "10px",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: "1.1rem",
+                        color: "var(--text-muted)",
+                        padding: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        lineHeight: 1
+                      }}
+                    >
+                      {showPassword ? "👁️" : "🙈"}
+                    </button>
+                  </div>
                 </div>
 
                 <button

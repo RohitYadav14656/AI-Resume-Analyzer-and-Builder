@@ -480,23 +480,23 @@ function HeroPage({ navigate }) {
               </div>
             )}
 
-            <div className="hero-stats" style={{ marginTop: "3rem" }}>
+            <div className="hero-stats">
               <div className="stat-item">
-                <div className="stat-number" style={{ color: "var(--accent)" }}>
+                <div className="stat-number">
                   <CountUp end={98} duration={2} suffix="%" />
                 </div>
                 <div className="stat-label">ATS Pass Rate</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number" style={{ color: "var(--accent)" }}>
+                <div className="stat-number">
                   <CountUp end={2} duration={1.5} suffix=" min" />
                 </div>
                 <div className="stat-label">Avg. Build Time</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number" style={{ color: "var(--accent)", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                <div className="stat-number stat-ai">
                   <span>AI</span>
-                  <LottieIcon type="success" width={24} height={24} loop={false} />
+                  <LottieIcon type="success" width={22} height={22} loop={false} />
                 </div>
                 <div className="stat-label">Smart Analysis</div>
               </div>

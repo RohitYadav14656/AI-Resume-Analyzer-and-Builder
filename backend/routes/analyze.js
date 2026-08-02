@@ -407,11 +407,13 @@ TARGET JOB DESCRIPTION:
 ${jobDescription.slice(0, 3000)}
 """
 
-CRITICAL INSTRUCTIONS:
-1. Parse the contact info, education, work experience, projects, skills, and additional info from the original resume.
-2. Tailor the content (summary, skills list, experience descriptions, project descriptions) to match the keywords and responsibilities of the job description.
-3. Keep all names, emails, phones, links, companies, job titles, university names, degrees, project names, and dates/durations completely factual as extracted from the original resume. Do NOT invent new jobs, schools, or credentials.
-4. Format the final output as a valid JSON object in EXACTLY the following format:
+CRITICAL INSTRUCTIONS FOR SINGLE 1-PAGE A4 FIT & PROJECT LINKS:
+1. Parse ALL contact info, education, work experience, projects, skills, and additional info from the original resume.
+2. For EVERY project entry, ensure a valid, clean project link or GitHub repository URL is included in the "link" field (e.g. "https://github.com/user/project-name" or "https://project-demo.com").
+3. Enrich the summary, skills, experience bullet points, project descriptions, and additional info (extra) with target job keywords, technical tools, and metrics.
+4. Keep bullet point lengths balanced: generate 2 to 3 concise, high-impact bullet points per role/project so that the ENTIRE tailored resume (including contact, summary, skills, experience, education, projects with links, and extra info) fits strictly on a SINGLE 1-PAGE A4 sheet without spilling over onto page 2.
+5. Keep all factual candidate details (names, companies, dates, degrees, schools) accurate.
+6. Format the final output as a valid JSON object in EXACTLY the following format:
 
 {
   "userName": "<full name>",
@@ -419,14 +421,14 @@ CRITICAL INSTRUCTIONS:
   "phone": "<phone number or empty string>",
   "linkedin": "<linkedin url or empty string>",
   "github": "<github url or empty string>",
-  "summary": "<2-3 sentence tailored professional summary>",
-  "skills": "<comma-separated string of tailored technical skills, e.g. 'React, Node.js, Python'>",
+  "summary": "<2-3 sentence rich, keyword-optimized professional summary>",
+  "skills": "<comma-separated string of technical skills, frameworks, and tools>",
   "experience": [
     {
       "company": "<company name>",
       "role": "<job title>",
       "duration": "<e.g. Jan 2023 - Dec 2024>",
-      "description": "<tailored bullet points, each on a new line>"
+      "description": "<2-3 concise high-impact action bullet points, each on a new line>"
     }
   ],
   "education": [
@@ -439,12 +441,12 @@ CRITICAL INSTRUCTIONS:
   "projects": [
     {
       "name": "<project name>",
-      "description": "<tailored project description bullet points, each on a new line>",
-      "techStack": "<comma-separated list of tech used in the project, e.g. 'React, Express'>",
-      "link": "<project link or empty string>"
+      "description": "<2-3 concise high-impact project bullet points, each on a new line>",
+      "techStack": "<comma-separated tech stack used>",
+      "link": "<clean project GitHub or live demo URL, e.g. https://github.com/...>"
     }
   ],
-  "extra": "<other certifications, languages, awards, or empty string>"
+  "extra": "<key certifications, awards, languages, or relevant technical achievements>"
 }
 
 Ensure the output contains ONLY the JSON. No markdown backticks, no comments, no intro/outro.
@@ -455,25 +457,15 @@ function buildTailorPrompt(resume, jobDescription) {
   const resumeJsonStr = JSON.stringify(resume, null, 2);
 
   return `
-You are tasked with tailoring a user's resume for a specific job description to optimize it for Applicant Tracking Systems (ATS) and hiring managers.
+Analyze the provided user resume JSON and tailor it for the target job description. Output the result in the exact same JSON format.
 
-ORIGINAL RESUME DATA (JSON):
+USER RESUME JSON:
 """
 ${resumeJsonStr}
 """
 
 TARGET JOB DESCRIPTION:
 """
-${jobDescription.slice(0, 4000)}
-"""
-
-CRITICAL INSTRUCTIONS:
-1. Return a JSON object with the EXACT same keys and structure as the original resume data.
-2. Keep ALL names, emails, phone numbers, website links, company names, job titles/roles, dates/duration, university/school names, degrees, project names, and project links EXACTLY as they are. DO NOT change or invent any of these.
-3. Optimize the following fields to match the target job description:
-   - "summary": Rewrite to highlight skills, tools, and experiences that are highly relevant to the job description (2-3 sentences).
-   - "skills": This is a comma-separated string (e.g. "React, Node.js, Python"). Add relevant technical keywords, methodologies, and tools mentioned in the job description that align with the user's experience. Remove irrelevant or outdated skills if necessary to keep it clean and focused.
-   - "experience": In each experience entry, update the "description" field. Maintain the format (where each line is a bullet point). Rewrite or refine the bullet points using strong action verbs and metrics where possible, making sure they emphasize skills and tasks relevant to the job description.
    - "projects": In each project entry, update the "description" field and "techStack" field. Refine the project descriptions and highlight technologies that align with the job description.
 4. Respond ONLY with the final tailored JSON object. DO NOT wrap it in markdown code block formatting (no \`\`\`json or \`\`\`), and do not include any introductory or concluding text.
 `;
@@ -629,6 +621,112 @@ Ensure the output contains ONLY the JSON. No markdown backticks, no comments, no
     console.error("Failed to parse and save analyzed resume:", err.message);
   }
 }
+
+// ─── POST /api/analyze/suggest-job-description ─────────────────────────────
+router.post("/suggest-job-description", auth, async (req, res, next) => {
+  try {
+    const { role } = req.body;
+    const targetRole = role || "Full Stack Software Engineer";
+
+    const prompt = `
+Generate a target Job Target & Career Objective description written strictly from the USER'S / CANDIDATE'S Point of View (POV) for a target position as "${targetRole}".
+
+Use first-person / candidate perspective (User's POV):
+Target Position: ${targetRole}
+
+Career Goal & Objective:
+"As a dedicated ${targetRole}, I am seeking to leverage my technical expertise in modern application design, database architecture, and full-stack development to build scalable, secure, and user-centric software solutions."
+
+Key Competencies & Target Responsibilities:
+• Architecting, developing, and deploying robust web applications and RESTful/GraphQL APIs.
+• Writing clean, maintainable, and high-performance code with comprehensive unit and integration testing.
+• Collaborating with engineering teams, product managers, and UI/UX designers to ship features.
+• Optimizing backend queries, front-end render times, and CI/CD deployment pipelines for maximum speed.
+
+Target Technical Stack & Tools I Excel In:
+React, Node.js, TypeScript, Express, MongoDB/PostgreSQL, Docker, AWS/GCP, REST APIs, Git.
+
+Format as clean plain text written from the candidate's point of view.
+`;
+
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: "You are an executive career advisor writing target job objectives strictly from the candidate's point of view.",
+        },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.4,
+    });
+
+    const jobDescription = completion.choices[0].message.content.trim();
+    res.json({ success: true, jobDescription });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── POST /api/analyze/check-grammar ────────────────────────────────────────
+router.post("/check-grammar", auth, async (req, res, next) => {
+  try {
+    const { text, resumeData } = req.body;
+
+    if (!text && !resumeData) {
+      return next(new AppError("Please provide text or resumeData to check grammar.", 400));
+    }
+
+    const payloadStr = text ? text : JSON.stringify(resumeData, null, 2);
+
+    const prompt = `
+You are an expert copyeditor, grammarian, and executive resume coach.
+Analyze the following resume content for spelling errors, grammatical mistakes, passive voice, weak action verbs, and punctuation issues.
+
+INPUT CONTENT:
+"""
+${payloadStr.slice(0, 5000)}
+"""
+
+INSTRUCTIONS:
+1. Fix all spelling, syntax, and grammatical errors.
+2. Upgrade weak verbs to strong executive action verbs (e.g. Spearheaded, Engineered, Orchestrated, Optimized, Accelerated).
+3. If input is raw text, output plain corrected text. If input is resumeData JSON, return a valid JSON object with key "correctedData" matching the schema, and key "improvements" containing a list of specific grammar fixes made.
+
+Format output as valid JSON in this structure:
+{
+  "correctedText": "<corrected plain text if input was text>",
+  "improvements": ["<bullet point list of grammar/spelling fixes applied>"],
+  "correctedData": <corrected object if input was resumeData, else null>
+}
+Ensure the output contains ONLY the JSON. No markdown backticks.
+`;
+
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert grammar proofreader. Respond only with valid JSON.",
+        },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.2,
+    });
+
+    const raw = completion.choices[0].message.content.trim();
+    let result;
+    try {
+      result = extractJSON(raw);
+    } catch (e) {
+      result = { correctedText: raw.replace(/```json|```/g, "").trim(), improvements: ["Applied grammar and tone polish."] };
+    }
+
+    res.json({ success: true, ...result });
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;
 

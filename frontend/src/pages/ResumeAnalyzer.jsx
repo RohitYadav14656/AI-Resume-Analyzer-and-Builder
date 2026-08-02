@@ -1,18 +1,25 @@
 import { useState, useRef } from "react";
 import axios from "axios";
+import api from "../api";
 import { AnalysisResultSkeleton } from "../components/Skeleton";
+import { RESUME_THEMES, RESUME_FONTS } from "./ResumeBuilder";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 export default function ResumeAnalyzer({ form, setForm, setView }) {
   const [file, setFile] = useState(null);
   const [jobDescription, setJobDescription] = useState("");
+  const [suggestingJobDesc, setSuggestingJobDesc] = useState(false);
+  const [checkingGrammar, setCheckingGrammar] = useState(false);
+  const [grammarNotice, setGrammarNotice] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeAction, setActiveAction] = useState(""); // "analyze" | "tailor"
   const [result, setResult] = useState(null);
   const [tailoredResult, setTailoredResult] = useState(null);
   const [error, setError] = useState("");
   const [downloadingTailored, setDownloadingTailored] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState(RESUME_THEMES[0]);
+  const [selectedFont, setSelectedFont] = useState(RESUME_FONTS[0]);
   const tailoredPreviewRef = useRef(null);
 
   const downloadTailoredPDF = async () => {
@@ -65,12 +72,12 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
       const fullText = textParts.join("\n");
 
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: 0,
         filename: `${name.replace(/\s+/g, "_")}_Tailored_Resume.pdf`,
         image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 794 },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+        pagebreak: { mode: ["avoid-all", "css"] },
       };
 
       await html2pdf()
@@ -91,6 +98,42 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
       alert("Failed to generate PDF. Please try again.");
     } finally {
       setDownloadingTailored(false);
+    }
+  };
+
+  const handleSuggestJobDesc = async (roleName = "Full Stack Software Engineer") => {
+    setSuggestingJobDesc(true);
+    try {
+      const res = await api.post("/api/analyze/suggest-job-description", { role: roleName });
+      if (res.data.jobDescription) {
+        setJobDescription(res.data.jobDescription);
+      }
+    } catch (err) {
+      console.error("AI Job Suggestion error:", err);
+      setJobDescription(
+        `Target Role: ${roleName}\nKey Responsibilities:\n• Design, develop, and maintain high-performance scalable web applications.\n• Write clean, robust, and well-tested code using modern tech stack.\n• Collaborate with product and design teams to launch innovative user experiences.\n• Optimize database queries and backend APIs for maximum speed and security.`
+      );
+    } finally {
+      setSuggestingJobDesc(false);
+    }
+  };
+
+  const handleCheckGrammar = async () => {
+    if (!tailoredResult) return;
+    setCheckingGrammar(true);
+    setGrammarNotice("");
+    try {
+      const res = await api.post("/api/analyze/check-grammar", { resumeData: tailoredResult });
+      if (res.data.correctedData) {
+        setTailoredResult(res.data.correctedData);
+      }
+      const improvementsText = res.data.improvements?.join("\n• ") || "Grammar, punctuation, and executive action verbs polished!";
+      setGrammarNotice(improvementsText);
+    } catch (err) {
+      console.error("Grammar check error:", err);
+      alert("Grammar check failed. Please try again.");
+    } finally {
+      setCheckingGrammar(false);
     }
   };
 
@@ -281,12 +324,67 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
           </div>
 
           <div className="form-group">
-            <label>Job Description <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>(optional — improves matching accuracy)</span></label>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
+              <label style={{ margin: 0 }}>Job Description <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>(optional — improves matching accuracy)</span></label>
+              <button
+                type="button"
+                onClick={() => handleSuggestJobDesc("Full Stack Software Engineer")}
+                disabled={suggestingJobDesc}
+                style={{
+                  background: "rgba(217, 119, 6, 0.12)",
+                  border: "1px solid var(--accent)",
+                  color: "var(--accent)",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  borderRadius: "8px",
+                  padding: "0.25rem 0.6rem",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.35rem"
+                }}
+              >
+                {suggestingJobDesc ? "✨ Generating..." : "✨ AI Suggest Job Description"}
+              </button>
+            </div>
+
+            {/* Role Preset Chips */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>Quick Presets:</span>
+              {[
+                "Full Stack Developer",
+                "Frontend React Engineer",
+                "Backend Node.js Architect",
+                "Data Scientist / AI",
+                "DevOps & Cloud Specialist"
+              ].map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => handleSuggestJobDesc(role)}
+                  disabled={suggestingJobDesc}
+                  style={{
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-main)",
+                    fontSize: "0.72rem",
+                    borderRadius: "6px",
+                    padding: "0.15rem 0.45rem",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease"
+                  }}
+                >
+                  + {role}
+                </button>
+              ))}
+            </div>
+
             <textarea
               rows={5}
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste the job description here to get tailored keyword analysis and match score..."
+              placeholder="Paste the job description here or click '✨ AI Suggest Job Description' above..."
             />
           </div>
 
@@ -436,6 +534,18 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
               </div>
               <div className="btn-group-responsive">
                 <button
+                  onClick={handleCheckGrammar}
+                  disabled={checkingGrammar}
+                  style={{
+                    background: "rgba(16, 185, 129, 0.12)",
+                    border: "1px solid #10b981",
+                    color: "#10b981",
+                    fontWeight: 600
+                  }}
+                >
+                  {checkingGrammar ? "✨ Proofreading..." : "📝 Check Grammar & Polish"}
+                </button>
+                <button
                   onClick={downloadTailoredPDF}
                   disabled={downloadingTailored}
                   style={{
@@ -462,131 +572,158 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", padding: "1.25rem", background: "var(--surface-2)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
-              {/* Summary */}
-              {tailoredResult.summary && (
-                <div>
-                  <h4 style={{ color: "var(--primary)", fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 0.5rem 0" }}>Summary</h4>
-                  <p style={{ fontSize: "0.9rem", color: "var(--text-main)", margin: 0, lineHeight: 1.6 }}>{tailoredResult.summary}</p>
-                </div>
-              )}
+            {grammarNotice && (
+              <div style={{
+                background: "rgba(16, 185, 129, 0.08)",
+                border: "1px solid rgba(16, 185, 129, 0.25)",
+                borderRadius: "var(--radius)",
+                padding: "0.85rem 1.1rem",
+                marginBottom: "1rem",
+                fontSize: "0.85rem",
+                color: "#10b981",
+                whiteSpace: "pre-line",
+                lineHeight: "1.5"
+              }}>
+                <strong>✨ AI Grammar & Style Polish Applied:</strong>
+                <br />
+                {grammarNotice}
+              </div>
+            )}
 
-              {/* Skills */}
-              {tailoredResult.skills && (
-                <div>
-                  <h4 style={{ color: "var(--primary)", fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 0.5rem 0" }}>Skills</h4>
-                  <p style={{ fontSize: "0.9rem", color: "var(--text-main)", margin: 0, lineHeight: 1.6 }}>{tailoredResult.skills}</p>
+            {/* Theme & Palette Customization Bar for Export */}
+            <div style={{
+              background: "var(--surface-2)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-lg)",
+              padding: "0.8rem 1.25rem",
+              marginBottom: "1rem",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "0.75rem"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>Export Theme:</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  {RESUME_THEMES.map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => setSelectedTheme(theme)}
+                      title={theme.name}
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        borderRadius: "50%",
+                        background: theme.accent,
+                        border: selectedTheme.id === theme.id ? "2px solid var(--text-main)" : "2px solid #fff",
+                        boxShadow: selectedTheme.id === theme.id ? `0 0 0 2px ${theme.accent}` : "0 2px 4px rgba(0,0,0,0.15)",
+                        cursor: "pointer",
+                        padding: 0,
+                        transition: "all 0.15s ease",
+                        transform: selectedTheme.id === theme.id ? "scale(1.15)" : "scale(1)",
+                      }}
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
 
-              {/* Experience */}
-              {tailoredResult.experience && tailoredResult.experience.length > 0 && (
-                <div>
-                  <h4 style={{ color: "var(--primary)", fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 0.5rem 0" }}>Experience</h4>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                    {tailoredResult.experience.map((exp, idx) => (
-                      <div key={idx} style={{ paddingLeft: "0.5rem", borderLeft: "2px solid var(--border)" }}>
-                        <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)" }}>
-                          {exp.role} {exp.company ? `at ${exp.company}` : ""}
-                        </div>
-                        <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>{exp.duration}</div>
-                        {exp.description && (
-                          <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-                            {exp.description.split("\n").filter(Boolean).map((line, lIdx) => (
-                              <li key={lIdx}>{line.trim()}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Projects */}
-              {tailoredResult.projects && tailoredResult.projects.length > 0 && (
-                <div>
-                  <h4 style={{ color: "var(--primary)", fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 0.5rem 0" }}>Projects</h4>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                    {tailoredResult.projects.map((proj, idx) => (
-                      <div key={idx} style={{ paddingLeft: "0.5rem", borderLeft: "2px solid var(--border)" }}>
-                        <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)" }}>
-                          {proj.name} {proj.techStack ? `| Tech: ${proj.techStack}` : ""}
-                        </div>
-                        {proj.description && (
-                          <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-                            {proj.description.split("\n").filter(Boolean).map((line, lIdx) => (
-                              <li key={lIdx}>{line.trim()}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>Font:</span>
+                {RESUME_FONTS.map((font) => (
+                  <button
+                    key={font.id}
+                    type="button"
+                    onClick={() => setSelectedFont(font)}
+                    style={{
+                      padding: "0.2rem 0.55rem",
+                      fontSize: "0.75rem",
+                      borderRadius: "6px",
+                      fontWeight: 600,
+                      fontFamily: font.value,
+                      background: selectedFont.id === font.id ? "var(--accent)" : "var(--surface)",
+                      color: selectedFont.id === font.id ? "white" : "var(--text-main)",
+                      border: "1px solid var(--border)",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    {font.name}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Off-screen/hidden A4 container for PDF generation */}
-            <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
+            {/* Live A4 Tailored Resume Preview Paper */}
+            <div className="resume-preview-wrapper" style={{ display: "flex", justifyContent: "center", width: "100%", overflowX: "auto", padding: "1rem 0" }}>
               <div
+                id="tailored-resume-preview"
                 ref={tailoredPreviewRef}
                 style={{
                   background: "#fff",
                   color: "#1a1a1a",
-                  padding: "40px 48px",
-                  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                  padding: "32px 42px",
+                  fontFamily: selectedFont.value,
                   width: "794px",
                   minHeight: "1123px",
+                  maxHeight: "1123px",
+                  overflow: "hidden",
                   boxSizing: "border-box",
-                  fontSize: "10pt",
-                  lineHeight: "1.4",
+                  fontSize: "9.5pt",
+                  lineHeight: "1.38",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+                  borderRadius: "4px"
                 }}
               >
-                <div style={{ textAlign: "center", marginBottom: "20px", paddingBottom: "16px", borderBottom: "2px solid #1a1a1a" }}>
-                  <h1 style={{ margin: "0 0 6px 0", fontSize: "22pt", color: "#111", textTransform: "uppercase", letterSpacing: "2px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>
+                {/* Header */}
+                <div style={{ textAlign: "center", marginBottom: "14px", paddingBottom: "12px", borderBottom: `2.5px solid ${selectedTheme.accent}` }}>
+                  <h1 style={{ margin: "0 0 4px 0", fontSize: "20pt", color: selectedTheme.header, textTransform: "uppercase", letterSpacing: "1.5px", fontFamily: selectedFont.value, fontWeight: 700 }}>
                     {tailoredResult.userName || "YOUR NAME"}
                   </h1>
-                  <p style={{ margin: 0, fontSize: "9pt", color: "#444", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                  <p style={{ margin: 0, fontSize: "9pt", color: "#444", fontFamily: selectedFont.value }}>
                     {[tailoredResult.email, tailoredResult.phone, tailoredResult.linkedin, tailoredResult.github].filter(Boolean).join("  |  ")}
                   </p>
                 </div>
 
+                {/* Summary */}
                 {tailoredResult.summary && (
-                  <div style={{ marginBottom: "16px" }}>
-                    <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Summary</h3>
-                    <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
-                    <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", color: "#222", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{tailoredResult.summary}</p>
+                  <div style={{ marginBottom: "12px" }}>
+                    <h3 style={{ margin: "0 0 3px 0", fontSize: "9.5pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.2px", fontFamily: selectedFont.value, fontWeight: 700 }}>Summary</h3>
+                    <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "6px" }} />
+                    <p style={{ margin: 0, fontSize: "9pt", lineHeight: "1.38", color: "#222", fontFamily: selectedFont.value }}>{tailoredResult.summary}</p>
                   </div>
                 )}
 
+                {/* Skills */}
                 {tailoredResult.skills && (
-                  <div style={{ marginBottom: "16px" }}>
-                    <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Skills</h3>
-                    <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
-                    <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", color: "#222" }}>
-                      {tailoredResult.skills.split(",").map(s => s.trim()).join("  •  ")}
+                  <div style={{ marginBottom: "12px" }}>
+                    <h3 style={{ margin: "0 0 3px 0", fontSize: "9.5pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.2px", fontFamily: selectedFont.value, fontWeight: 700 }}>Skills</h3>
+                    <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "6px" }} />
+                    <p style={{ margin: 0, fontSize: "9pt", lineHeight: "1.38", fontFamily: selectedFont.value, color: "#222" }}>
+                      {typeof tailoredResult.skills === "string" ? tailoredResult.skills.split(",").map(s => s.trim()).join("  •  ") : tailoredResult.skills}
                     </p>
                   </div>
                 )}
 
+                {/* Experience */}
                 {tailoredResult.experience && tailoredResult.experience.length > 0 && (
-                  <div style={{ marginBottom: "16px" }}>
-                    <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Professional Experience</h3>
-                    <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                  <div style={{ marginBottom: "12px" }}>
+                    <h3 style={{ margin: "0 0 3px 0", fontSize: "9.5pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.2px", fontFamily: selectedFont.value, fontWeight: 700 }}>Professional Experience</h3>
+                    <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "6px" }} />
                     {tailoredResult.experience.map((exp, idx) => (
-                      <div key={idx} style={{ marginBottom: "12px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "3px" }}>
+                      <div key={idx} style={{ marginBottom: "8px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "2px" }}>
                           <div>
-                            <strong style={{ fontSize: "10pt", color: "#111", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{exp.role}</strong>
-                            {exp.company && <span style={{ fontSize: "9.5pt", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}> — {exp.company}</span>}
+                            <strong style={{ fontSize: "9.5pt", color: selectedTheme.header, fontFamily: selectedFont.value }}>{exp.role}</strong>
+                            {exp.company && <span style={{ fontSize: "9pt", color: "#333", fontFamily: selectedFont.value }}> — {exp.company}</span>}
                           </div>
-                          {exp.duration && <em style={{ fontSize: "9pt", color: "#555", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{exp.duration}</em>}
+                          {exp.duration && <em style={{ fontSize: "8.5pt", color: "#555", fontFamily: selectedFont.value }}>{exp.duration}</em>}
                         </div>
                         {exp.description && (
-                          <ul style={{ margin: "0", paddingLeft: "18px", fontSize: "9.5pt", lineHeight: "1.5", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                          <ul style={{ margin: "0", paddingLeft: "16px", fontSize: "9pt", lineHeight: "1.35", color: "#333", fontFamily: selectedFont.value }}>
                             {exp.description.split("\n").filter((l) => l.trim()).map((line, idx2) => (
-                              <li key={idx2} style={{ marginBottom: "2px" }}>{line}</li>
+                              <li key={idx2} style={{ marginBottom: "1.5px" }}>{line}</li>
                             ))}
                           </ul>
                         )}
@@ -595,39 +732,45 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                   </div>
                 )}
 
+                {/* Education */}
                 {tailoredResult.education && tailoredResult.education.length > 0 && (
                   <div style={{ marginBottom: "16px" }}>
-                    <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Education</h3>
-                    <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                    <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.5px", fontFamily: selectedFont.value, fontWeight: 700 }}>Education</h3>
+                    <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "8px" }} />
                     {tailoredResult.education.map((edu, idx) => (
                       <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
                         <div>
-                          <strong style={{ fontSize: "10pt", color: "#111", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{edu.school || edu.institution}</strong>
-                          {edu.degree && <span style={{ fontSize: "9.5pt", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}> — {edu.degree}</span>}
+                          <strong style={{ fontSize: "10pt", color: selectedTheme.header, fontFamily: selectedFont.value }}>{edu.school || edu.institution}</strong>
+                          {edu.degree && <span style={{ fontSize: "9.5pt", color: "#333", fontFamily: selectedFont.value }}> — {edu.degree}</span>}
                         </div>
-                        {edu.year && <span style={{ fontSize: "9pt", color: "#555", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{edu.year}</span>}
+                        {edu.year && <span style={{ fontSize: "9pt", color: "#555", fontFamily: selectedFont.value }}>{edu.year}</span>}
                       </div>
                     ))}
                   </div>
                 )}
 
+                {/* Projects */}
                 {tailoredResult.projects && tailoredResult.projects.length > 0 && (
-                  <div style={{ marginBottom: "16px" }}>
-                    <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Projects</h3>
-                    <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
+                  <div style={{ marginBottom: "12px" }}>
+                    <h3 style={{ margin: "0 0 3px 0", fontSize: "9.5pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.2px", fontFamily: selectedFont.value, fontWeight: 700 }}>Projects</h3>
+                    <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "6px" }} />
                     {tailoredResult.projects.map((proj, idx) => (
-                      <div key={idx} style={{ marginBottom: "10px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "3px" }}>
+                      <div key={idx} style={{ marginBottom: "8px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "2px" }}>
                           <div>
-                            <strong style={{ fontSize: "10pt", color: "#111", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{proj.name}</strong>
-                            {proj.techStack && <span style={{ fontSize: "9pt", color: "#444", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}> | {proj.techStack}</span>}
+                            <strong style={{ fontSize: "9.5pt", color: selectedTheme.header, fontFamily: selectedFont.value }}>{proj.name}</strong>
+                            {proj.techStack && <span style={{ fontSize: "9pt", color: "#444", fontFamily: selectedFont.value }}> | {proj.techStack}</span>}
                           </div>
-                          {proj.link && <span style={{ fontSize: "8.5pt", color: "#555", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>{proj.link}</span>}
                         </div>
+                        {proj.link && (
+                          <div style={{ fontSize: "8.5pt", color: selectedTheme.accent, marginBottom: "2px", fontFamily: selectedFont.value, fontWeight: 500 }}>
+                            🔗 <a href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`} target="_blank" rel="noreferrer" style={{ color: selectedTheme.accent, textDecoration: "underline" }}>{proj.link}</a>
+                          </div>
+                        )}
                         {proj.description && (
-                          <ul style={{ margin: "0", paddingLeft: "18px", fontSize: "9.5pt", lineHeight: "1.5", color: "#333", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                          <ul style={{ margin: "0", paddingLeft: "16px", fontSize: "9pt", lineHeight: "1.35", color: "#333", fontFamily: selectedFont.value }}>
                             {proj.description.split("\n").filter((l) => l.trim()).map((line, idx2) => (
-                              <li key={idx2} style={{ marginBottom: "2px" }}>{line}</li>
+                              <li key={idx2} style={{ marginBottom: "1.5px" }}>{line}</li>
                             ))}
                           </ul>
                         )}
@@ -636,11 +779,12 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                   </div>
                 )}
 
+                {/* Extra */}
                 {tailoredResult.extra && (
                   <div>
-                    <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: "#111", letterSpacing: "1.5px", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700 }}>Additional Information</h3>
-                    <div style={{ borderBottom: "1.5px solid #333", marginBottom: "8px" }} />
-                    <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", whiteSpace: "pre-wrap", color: "#222", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                    <h3 style={{ margin: "0 0 4px 0", fontSize: "10pt", textTransform: "uppercase", color: selectedTheme.accent, letterSpacing: "1.5px", fontFamily: selectedFont.value, fontWeight: 700 }}>Additional Information</h3>
+                    <div style={{ borderBottom: `1.5px solid ${selectedTheme.accent}`, marginBottom: "8px" }} />
+                    <p style={{ margin: 0, fontSize: "9.5pt", lineHeight: "1.5", whiteSpace: "pre-wrap", color: "#222", fontFamily: selectedFont.value }}>
                       {tailoredResult.extra}
                     </p>
                   </div>
