@@ -116,7 +116,11 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
       });
       setResult(res.data.analysis);
       setTimeout(() => {
-        document.getElementById("analysis-result-section")?.scrollIntoView({ behavior: "smooth" });
+        const el = document.getElementById("analysis-result-section");
+        if (el) {
+          const y = el.getBoundingClientRect().top + window.pageYOffset - 90;
+          window.scrollTo({ top: y, behavior: "smooth" });
+        }
       }, 150);
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || "Something went wrong analyzing your resume.");
@@ -152,7 +156,11 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
       if (res.data && res.data.success && res.data.tailoredResume) {
         setTailoredResult(res.data.tailoredResume);
         setTimeout(() => {
-          document.getElementById("tailored-result-section")?.scrollIntoView({ behavior: "smooth" });
+          const el = document.getElementById("tailored-result-section");
+          if (el) {
+            const y = el.getBoundingClientRect().top + window.pageYOffset - 90;
+            window.scrollTo({ top: y, behavior: "smooth" });
+          }
         }, 150);
       } else {
         setError("Unexpected response from tailoring service.");

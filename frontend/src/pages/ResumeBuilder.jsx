@@ -510,7 +510,13 @@ export default function ResumeBuilder({ form, setForm }) {
         <p>Fill in your details and preview your resume in real time</p>
         <button
           className="secondary"
-          onClick={() => document.getElementById("resume-preview-section")?.scrollIntoView({ behavior: "smooth" })}
+          onClick={() => {
+            const el = document.getElementById("resume-preview-section");
+            if (el) {
+              const y = el.getBoundingClientRect().top + window.pageYOffset - 90;
+              window.scrollTo({ top: y, behavior: "smooth" });
+            }
+          }}
           style={{ marginTop: "0.75rem", padding: "0.4rem 1rem", fontSize: "0.85rem", borderRadius: "999px" }}
         >
           👁️ Check Updated Resume ↓
@@ -696,7 +702,13 @@ export default function ResumeBuilder({ form, setForm }) {
           <div className="builder-actions btn-group-responsive" style={{ paddingTop: "0.5rem", borderTop: "1px solid var(--border)" }}>
             <button
               className="secondary"
-              onClick={() => document.getElementById("resume-preview-section")?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() => {
+                const el = document.getElementById("resume-preview-section");
+                if (el) {
+                  const y = el.getBoundingClientRect().top + window.pageYOffset - 90;
+                  window.scrollTo({ top: y, behavior: "smooth" });
+                }
+              }}
               style={{ flex: 1 }}
             >
               👁️ Check Resume ↓

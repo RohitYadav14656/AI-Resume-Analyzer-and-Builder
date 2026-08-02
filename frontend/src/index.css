@@ -105,6 +105,13 @@ p {
   border: 1px solid var(--border);
   transition: var(--transition);
   max-width: 100%;
+  scroll-margin-top: 90px;
+}
+
+#analysis-result-section,
+#tailored-result-section,
+#resume-preview-section {
+  scroll-margin-top: 90px;
 }
 
 .form-2col {
