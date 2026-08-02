@@ -1,9 +1,9 @@
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Float } from "@react-three/drei";
 import * as THREE from "three";
 
-// Individual Orbiting Shape
+// Individual Orbiting Shape - using lightweight meshStandardMaterial
 function OrbitingShape({ geometry, color, speed, radius, scale, positionY = 0 }) {
   const meshRef = useRef();
 
@@ -21,44 +21,40 @@ function OrbitingShape({ geometry, color, speed, radius, scale, positionY = 0 })
   return (
     <mesh ref={meshRef} scale={scale}>
       {geometry}
-      <meshPhysicalMaterial
+      <meshStandardMaterial
         color={color}
-        roughness={0.1}
-        metalness={0.8}
-        clearcoat={1.0}
-        clearcoatRoughness={0.1}
-        transmission={0.6}
-        thickness={0.5}
+        roughness={0.2}
+        metalness={0.6}
+        transparent
+        opacity={0.9}
       />
     </mesh>
   );
 }
 
-// Interactive Floating Resume Document
+// Interactive Floating Resume Document - optimized material and segments
 function ResumeDocument() {
   const meshRef = useRef();
   
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.getElapsedTime() * 0.5) * 0.2;
-      meshRef.current.rotation.x = Math.cos(state.clock.getElapsedTime() * 0.5) * 0.1;
+      meshRef.current.rotation.y = Math.sin(state.clock.getElapsedTime() * 0.5) * 0.18;
+      meshRef.current.rotation.x = Math.cos(state.clock.getElapsedTime() * 0.5) * 0.08;
     }
   });
 
   return (
-    <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
+    <Float speed={1.5} rotationIntensity={0.4} floatIntensity={0.8}>
       <group ref={meshRef}>
         {/* Document Board */}
         <mesh castShadow receiveShadow>
           <boxGeometry args={[3, 4.2, 0.1]} />
-          <meshPhysicalMaterial
+          <meshStandardMaterial
             color="#ffffff"
-            roughness={0.15}
-            metalness={0.1}
-            transmission={0.6}
-            thickness={1.5}
+            roughness={0.2}
+            metalness={0.05}
             transparent
-            opacity={0.85}
+            opacity={0.92}
           />
         </mesh>
 
@@ -75,13 +71,11 @@ function ResumeDocument() {
         </mesh>
 
         {/* Text lines details */}
-        {/* Header Name Line */}
         <mesh position={[-0.7, 1.0, 0.06]}>
           <planeGeometry args={[1.2, 0.1]} />
           <meshBasicMaterial color="#2e2520" />
         </mesh>
 
-        {/* Subtitle */}
         <mesh position={[-0.9, 0.8, 0.06]}>
           <planeGeometry args={[0.8, 0.05]} />
           <meshBasicMaterial color="#78716c" />
@@ -123,14 +117,13 @@ function ResumeDocument() {
   );
 }
 
-// Background Particle System forming "AI" / Neural Network
+// Background Particle System forming "AI" / Neural Network (Optimized count: 350)
 function AIParticles() {
   const pointsRef = useRef();
 
-  const [positions, sizes] = useMemo(() => {
-    const count = 1200;
+  const [positions] = useMemo(() => {
+    const count = 350;
     const positions = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
 
     for (let i = 0; i < count; i++) {
       const u = Math.random();
@@ -142,17 +135,15 @@ function AIParticles() {
       positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
       positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
       positions[i * 3 + 2] = r * Math.cos(phi);
-
-      sizes[i] = Math.random() * 0.15 + 0.05;
     }
 
-    return [positions, sizes];
+    return [positions];
   }, []);
 
   useFrame((state) => {
     if (pointsRef.current) {
-      pointsRef.current.rotation.y = state.clock.getElapsedTime() * 0.05;
-      pointsRef.current.rotation.x = Math.sin(state.clock.getElapsedTime() * 0.02) * 0.1;
+      pointsRef.current.rotation.y = state.clock.getElapsedTime() * 0.04;
+      pointsRef.current.rotation.x = Math.sin(state.clock.getElapsedTime() * 0.02) * 0.08;
     }
   });
 
@@ -166,10 +157,10 @@ function AIParticles() {
       </bufferGeometry>
       <pointsMaterial
         color="#f59e0b"
-        size={0.08}
+        size={0.07}
         sizeAttenuation
         transparent
-        opacity={0.4}
+        opacity={0.35}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
       />
@@ -178,24 +169,45 @@ function AIParticles() {
 }
 
 export default function ResumeScene3D() {
+  const containerRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(true);
+
+  // Pause render loop when canvas is scrolled out of viewport
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div ref={containerRef} style={{ width: "100%", height: "100%", position: "relative" }}>
       <Canvas
         camera={{ position: [0, 0, 7.5], fov: 45 }}
-        gl={{ antialias: true, alpha: true }}
+        dpr={[1, 1.5]}
+        frameloop={isVisible ? "always" : "never"}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[10, 10, 5]} intensity={1.5} castShadow />
-        <pointLight position={[-10, -10, -5]} intensity={0.5} />
-        <pointLight position={[0, 5, 5]} intensity={1} color="#f59e0b" />
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[10, 10, 5]} intensity={1.2} />
+        <pointLight position={[-10, -10, -5]} intensity={0.4} />
+        <pointLight position={[0, 5, 5]} intensity={0.8} color="#f59e0b" />
 
         <ResumeDocument />
 
-        {/* Orbiting shapes around the resume */}
+        {/* Orbiting shapes around the resume (lower segment count) */}
         <OrbitingShape
-          geometry={<torusGeometry args={[0.5, 0.15, 16, 100]} />}
+          geometry={<torusGeometry args={[0.5, 0.12, 12, 32]} />}
           color="#f59e0b"
-          speed={0.8}
+          speed={0.7}
           radius={3.8}
           scale={0.8}
           positionY={1.5}
@@ -203,7 +215,7 @@ export default function ResumeScene3D() {
         <OrbitingShape
           geometry={<octahedronGeometry args={[0.6]} />}
           color="#fbbf24"
-          speed={-0.6}
+          speed={-0.5}
           radius={4.2}
           scale={0.7}
           positionY={-1}
@@ -211,7 +223,7 @@ export default function ResumeScene3D() {
         <OrbitingShape
           geometry={<icosahedronGeometry args={[0.5]} />}
           color="#d97706"
-          speed={0.5}
+          speed={0.4}
           radius={3.5}
           scale={0.8}
           positionY={0.5}
@@ -219,7 +231,7 @@ export default function ResumeScene3D() {
 
         <AIParticles />
 
-        <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
+        <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.4} />
       </Canvas>
     </div>
   );

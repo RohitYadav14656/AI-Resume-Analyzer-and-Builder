@@ -1,14 +1,31 @@
-import { useState, useEffect, useCallback } from "react";
-import ResumeBuilder from "./pages/ResumeBuilder";
-import ResumeAnalyzer from "./pages/ResumeAnalyzer";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import ResumeScene3D from "./components/ResumeScene3D";
-import SplineScene from "./components/SplineScene";
-import RiveCTA from "./components/RiveCTA";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import LottieIcon from "./components/LottieIcon";
 import { motion, AnimatePresence } from "framer-motion";
 import api, { setAccessToken, clearAccessToken, registerLogoutCallback } from "./api";
+
+// Lazy-loaded components for optimal initial bundle performance
+const ResumeBuilder = lazy(() => import("./pages/ResumeBuilder"));
+const ResumeAnalyzer = lazy(() => import("./pages/ResumeAnalyzer"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ResumeScene3D = lazy(() => import("./components/ResumeScene3D"));
+const RiveCTA = lazy(() => import("./components/RiveCTA"));
+
+// Lightweight Suspense fallback spinner
+const ViewLoader = () => (
+  <div style={{
+    minHeight: "60vh",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "1rem",
+    color: "var(--accent)"
+  }}>
+    <LottieIcon type="spinner" width={42} height={42} />
+    <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-muted)" }}>Loading view...</span>
+  </div>
+);
 // Local robust CountUp component to avoid bundler/library interop issues
 function CountUp({ end, duration = 2, suffix = "" }) {
   const [count, setCount] = useState(0);
@@ -369,20 +386,22 @@ export default function App() {
       </AnimatePresence>
 
       {/* ===== VIEWS ===== */}
-      {view === "home" && <HeroPage navigate={navigate} />}
-      {view === "builder" && <ResumeBuilder form={form} setForm={setForm} />}
-      {view === "analyzer" && <ResumeAnalyzer form={form} setForm={setForm} setView={setView} />}
-      {view === "login" && <Auth onAuthSuccess={handleAuthSuccess} />}
-      {view === "reset-password" && (
-        <ResetPassword
-          token={resetToken}
-          onGoToLogin={() => {
-            setResetToken(null);
-            setView("login");
-            scrollToTop();
-          }}
-        />
-      )}
+      <Suspense fallback={<ViewLoader />}>
+        {view === "home" && <HeroPage navigate={navigate} />}
+        {view === "builder" && <ResumeBuilder form={form} setForm={setForm} />}
+        {view === "analyzer" && <ResumeAnalyzer form={form} setForm={setForm} setView={setView} />}
+        {view === "login" && <Auth onAuthSuccess={handleAuthSuccess} />}
+        {view === "reset-password" && (
+          <ResetPassword
+            token={resetToken}
+            onGoToLogin={() => {
+              setResetToken(null);
+              setView("login");
+              scrollToTop();
+            }}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
@@ -434,16 +453,22 @@ function HeroPage({ navigate }) {
                 🚀 Build My Resume
               </button>
 
-              <RiveCTA 
-                label={analyzingState ? "Analyzing..." : "Analyze Resume"} 
-                onClick={() => {
-                  setAnalyzingState(true);
-                  setTimeout(() => {
-                    setAnalyzingState(false);
-                    navigate("analyzer");
-                  }, 2000);
-                }} 
-              />
+              <Suspense fallback={
+                <button className="rive-cta-btn" style={{ padding: "0.8rem 2rem", fontSize: "1rem", fontWeight: "700", borderRadius: "16px", background: "var(--accent)", color: "white", border: "none" }} onClick={() => navigate("analyzer")}>
+                  ✨ Analyze Resume
+                </button>
+              }>
+                <RiveCTA 
+                  label={analyzingState ? "Analyzing..." : "Analyze Resume"} 
+                  onClick={() => {
+                    setAnalyzingState(true);
+                    setTimeout(() => {
+                      setAnalyzingState(false);
+                      navigate("analyzer");
+                    }, 2000);
+                  }} 
+                />
+              </Suspense>
             </div>
 
             {analyzingState && (
@@ -487,7 +512,13 @@ function HeroPage({ navigate }) {
             style={{ position: "relative", width: "100%", height: "100%" }}
           >
             <div style={{ height: "100%", width: "100%" }}>
-              <ResumeScene3D />
+              <Suspense fallback={
+                <div style={{ width: "100%", height: "100%", minHeight: "450px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "24px", background: "rgba(248, 250, 252, 0.5)" }}>
+                  <LottieIcon type="spinner" width={36} height={36} />
+                </div>
+              }>
+                <ResumeScene3D />
+              </Suspense>
             </div>
           </motion.div>
         </div>

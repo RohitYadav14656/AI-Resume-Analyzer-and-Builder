@@ -71,15 +71,13 @@ function LocalNeuralBrain() {
 
       {/* Core Glowing Orb */}
       <mesh>
-        <sphereGeometry args={[1.0, 32, 32]} />
-        <meshPhysicalMaterial
+        <sphereGeometry args={[1.0, 24, 24]} />
+        <meshStandardMaterial
           color="#2563eb"
           emissive="#1d4ed8"
           emissiveIntensity={0.5}
-          roughness={0.1}
-          metalness={0.1}
-          transmission={0.9}
-          thickness={1}
+          roughness={0.2}
+          metalness={0.2}
         />
       </mesh>
     </group>
@@ -119,7 +117,7 @@ export default function SplineScene() {
   if (showFallback) {
     return (
       <div style={{ width: "100%", height: "100%", minHeight: "450px", position: "relative" }}>
-        <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+        <Canvas camera={{ position: [0, 0, 5], fov: 45 }} dpr={[1, 1.5]}>
           <ambientLight intensity={0.7} />
           <pointLight position={[10, 10, 10]} intensity={1.5} />
           <LocalNeuralBrain />

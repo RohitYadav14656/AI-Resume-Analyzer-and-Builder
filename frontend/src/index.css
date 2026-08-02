@@ -235,9 +235,9 @@ button.secondary:hover::after {
 
 /* ============ NAVBAR ============ */
 .navbar {
-  background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   padding: 0 2.5rem;
   height: 68px;
   box-shadow: 0 1px 0 rgba(0,0,0,0.06);
@@ -248,6 +248,8 @@ button.secondary:hover::after {
   top: 0;
   z-index: 100;
   border-bottom: 1px solid rgba(229, 231, 235, 0.6);
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .navbar-brand {
@@ -1387,19 +1389,20 @@ button.secondary:hover::after {
 
 /* ============ PREMIUM ANIMATIONS & GLASSMORPHISM ============ */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 20px 0 rgba(31, 38, 135, 0.04);
   border-radius: var(--radius-lg);
-  transition: var(--transition-slow);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 .glass-panel:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 16px 48px 0 rgba(31, 38, 135, 0.08);
-  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px 0 rgba(31, 38, 135, 0.07);
+  border-color: rgba(255, 255, 255, 0.7);
 }
 
 .glow-btn {
