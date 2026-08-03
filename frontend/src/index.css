@@ -1663,9 +1663,14 @@ button.secondary:hover::after {
 
 .mobile-section-nav button {
   flex-shrink: 0;
-  padding: 0.5rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.5rem 0.9rem;
   font-size: 0.82rem;
   font-weight: 600;
+  line-height: 1.2;
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
@@ -1673,6 +1678,7 @@ button.secondary:hover::after {
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  vertical-align: middle;
 }
 
 .mobile-section-nav button.active {
@@ -1686,33 +1692,70 @@ button.secondary:hover::after {
 .mobile-floating-switcher {
   display: none;
   position: fixed;
-  bottom: 1.25rem;
+  bottom: max(1.25rem, env(safe-area-inset-bottom, 1.25rem));
   left: 50%;
   transform: translateX(-50%);
   z-index: 999;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 30px;
-  padding: 4px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border-radius: 999px;
+  padding: 5px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 90vw;
 }
 
 .mobile-floating-switcher button {
-  padding: 0.5rem 1.25rem;
-  font-size: 0.85rem;
-  font-weight: 700;
-  border-radius: 25px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.6rem 1.35rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  border-radius: 999px;
   border: none;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  white-space: nowrap;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  min-width: 120px;
+}
+
+.mobile-floating-switcher button svg {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  transition: transform 0.2s ease;
+}
+
+.mobile-floating-switcher button span {
+  display: inline-block;
+  line-height: 1;
 }
 
 .mobile-floating-switcher button.active {
   background: var(--accent);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+  font-weight: 700;
+}
+
+.mobile-floating-switcher button.active svg {
+  transform: scale(1.08);
+}
+
+.mobile-floating-switcher button:hover:not(.active) {
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 /* Collapsible option box for mobile views */
@@ -1727,6 +1770,14 @@ button.secondary:hover::after {
 @media (max-width: 768px) {
   .mobile-floating-switcher {
     display: flex;
+  }
+
+  .mobile-panel-hidden {
+    display: none !important;
+  }
+
+  .builder-layout {
+    padding-bottom: 90px !important;
   }
 
   .container {

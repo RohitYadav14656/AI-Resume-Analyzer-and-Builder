@@ -622,9 +622,9 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
               justifyContent: "space-between",
               gap: "0.75rem"
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>Export Theme:</span>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>Export Theme</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
                   {RESUME_THEMES.map((theme) => (
                     <button
                       key={theme.id}
@@ -648,29 +648,32 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                 </div>
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>Font:</span>
-                {RESUME_FONTS.map((font) => (
-                  <button
-                    key={font.id}
-                    type="button"
-                    onClick={() => setSelectedFont(font)}
-                    style={{
-                      padding: "0.2rem 0.55rem",
-                      fontSize: "0.75rem",
-                      borderRadius: "6px",
-                      fontWeight: 600,
-                      fontFamily: font.value,
-                      background: selectedFont.id === font.id ? "var(--accent)" : "var(--surface)",
-                      color: selectedFont.id === font.id ? "white" : "var(--text-main)",
-                      border: "1px solid var(--border)",
-                      cursor: "pointer",
-                      transition: "all 0.15s ease"
-                    }}
-                  >
-                    {font.name}
-                  </button>
-                ))}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>Font</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+                  {RESUME_FONTS.map((font) => (
+                    <button
+                      key={font.id}
+                      type="button"
+                      onClick={() => setSelectedFont(font)}
+                      style={{
+                        padding: "0.2rem 0.55rem",
+                        fontSize: "0.75rem",
+                        borderRadius: "6px",
+                        fontWeight: 600,
+                        fontFamily: font.value,
+                        background: selectedFont.id === font.id ? "var(--accent)" : "var(--surface)",
+                        color: selectedFont.id === font.id ? "white" : "var(--text-main)",
+                        border: "1px solid var(--border)",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {font.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

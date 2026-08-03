@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { Edit3, Eye } from "lucide-react";
 import api from "../api";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
@@ -581,7 +582,7 @@ export default function ResumeBuilder({ form, setForm }) {
 
       <div className="container builder-layout" style={{ display: "flex", gap: "2rem", alignItems: "flex-start", paddingTop: 0 }}>
         {/* ===== FORM PANEL ===== */}
-        <div className="card" style={{ flex: 1, minWidth: 0, display: mobileMode === "edit" ? "block" : "none" }}>
+        <div className={`card builder-form-panel ${mobileMode === "preview" ? "mobile-panel-hidden" : ""}`} style={{ flex: 1, minWidth: 0 }}>
           {/* Mobile Section Nav Tabs */}
           <div className="mobile-section-nav">
             {[
@@ -829,7 +830,7 @@ export default function ResumeBuilder({ form, setForm }) {
         </div>
 
         {/* ===== LIVE PREVIEW PANEL ===== */}
-        <div id="resume-preview-section" className="resume-preview-wrapper" style={{ flex: 1, minWidth: 0, display: mobileMode === "preview" ? "flex" : undefined, flexDirection: "column", alignItems: "center" }}>
+        <div id="resume-preview-section" className={`resume-preview-wrapper ${mobileMode === "edit" ? "mobile-panel-hidden" : ""}`} style={{ flex: 1, minWidth: 0, flexDirection: "column", alignItems: "center" }}>
           {/* Header bar */}
           <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1rem 1.25rem", width: "100%", marginBottom: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -866,9 +867,9 @@ export default function ResumeBuilder({ form, setForm }) {
             gap: "0.75rem"
           }}>
             {/* Color Palette Swatches */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>Theme:</span>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>Theme</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
                 {RESUME_THEMES.map((theme) => (
                   <button
                     key={theme.id}
@@ -893,29 +894,32 @@ export default function ResumeBuilder({ form, setForm }) {
             </div>
 
             {/* Font Selector Buttons */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>Font:</span>
-              {RESUME_FONTS.map((font) => (
-                <button
-                  key={font.id}
-                  type="button"
-                  onClick={() => setSelectedFont(font)}
-                  style={{
-                    padding: "0.25rem 0.6rem",
-                    fontSize: "0.75rem",
-                    borderRadius: "6px",
-                    fontWeight: 600,
-                    fontFamily: font.value,
-                    background: selectedFont.id === font.id ? "var(--accent)" : "var(--surface)",
-                    color: selectedFont.id === font.id ? "white" : "var(--text-main)",
-                    border: "1px solid var(--border)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease"
-                  }}
-                >
-                  {font.name}
-                </button>
-              ))}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>Font</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+                {RESUME_FONTS.map((font) => (
+                  <button
+                    key={font.id}
+                    type="button"
+                    onClick={() => setSelectedFont(font)}
+                    style={{
+                      padding: "0.25rem 0.6rem",
+                      fontSize: "0.75rem",
+                      borderRadius: "6px",
+                      fontWeight: 600,
+                      fontFamily: font.value,
+                      background: selectedFont.id === font.id ? "var(--accent)" : "var(--surface)",
+                      color: selectedFont.id === font.id ? "white" : "var(--text-main)",
+                      border: "1px solid var(--border)",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    {font.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -1182,7 +1186,8 @@ export default function ResumeBuilder({ form, setForm }) {
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
         >
-          ✏️ Edit Form
+          <Edit3 size={16} />
+          <span>Edit Form</span>
         </button>
         <button
           type="button"
@@ -1195,7 +1200,8 @@ export default function ResumeBuilder({ form, setForm }) {
             }
           }}
         >
-          👁️ Preview
+          <Eye size={16} />
+          <span>Preview</span>
         </button>
       </div>
     </div>
