@@ -117,12 +117,12 @@ function ResumeDocument() {
   );
 }
 
-// Background Particle System forming "AI" / Neural Network (Optimized count: 350)
+// Background Particle System forming "AI" / Neural Network (Optimized count: 160)
 function AIParticles() {
   const pointsRef = useRef();
 
   const [positions] = useMemo(() => {
-    const count = 350;
+    const count = 160;
     const positions = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i++) {
@@ -130,7 +130,7 @@ function AIParticles() {
       const v = Math.random();
       const theta = u * 2.0 * Math.PI;
       const phi = Math.acos(2.0 * v - 1.0);
-      const r = 6 + Math.random() * 8;
+      const r = 5.5 + Math.random() * 7;
 
       positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
       positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
@@ -142,8 +142,8 @@ function AIParticles() {
 
   useFrame((state) => {
     if (pointsRef.current) {
-      pointsRef.current.rotation.y = state.clock.getElapsedTime() * 0.04;
-      pointsRef.current.rotation.x = Math.sin(state.clock.getElapsedTime() * 0.02) * 0.08;
+      pointsRef.current.rotation.y = state.clock.getElapsedTime() * 0.05;
+      pointsRef.current.rotation.x = Math.sin(state.clock.getElapsedTime() * 0.03) * 0.06;
     }
   });
 
@@ -157,10 +157,10 @@ function AIParticles() {
       </bufferGeometry>
       <pointsMaterial
         color="#f59e0b"
-        size={0.07}
+        size={0.08}
         sizeAttenuation
         transparent
-        opacity={0.35}
+        opacity={0.45}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
       />
@@ -192,20 +192,20 @@ export default function ResumeScene3D() {
     <div ref={containerRef} style={{ width: "100%", height: "100%", position: "relative" }}>
       <Canvas
         camera={{ position: [0, 0, 7.5], fov: 45 }}
-        dpr={[1, 1.5]}
+        dpr={Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.5)}
         frameloop={isVisible ? "always" : "never"}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <ambientLight intensity={0.7} />
-        <directionalLight position={[10, 10, 5]} intensity={1.2} />
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[10, 10, 5]} intensity={1.3} />
         <pointLight position={[-10, -10, -5]} intensity={0.4} />
-        <pointLight position={[0, 5, 5]} intensity={0.8} color="#f59e0b" />
+        <pointLight position={[0, 5, 5]} intensity={0.9} color="#f59e0b" />
 
         <ResumeDocument />
 
-        {/* Orbiting shapes around the resume (lower segment count) */}
+        {/* Orbiting shapes around the resume */}
         <OrbitingShape
-          geometry={<torusGeometry args={[0.5, 0.12, 12, 32]} />}
+          geometry={<torusGeometry args={[0.5, 0.12, 16, 32]} />}
           color="#f59e0b"
           speed={0.7}
           radius={3.8}
@@ -231,7 +231,7 @@ export default function ResumeScene3D() {
 
         <AIParticles />
 
-        <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.4} />
+        <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
       </Canvas>
     </div>
   );

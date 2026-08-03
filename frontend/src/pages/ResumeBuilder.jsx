@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import api from "../api";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
@@ -341,6 +341,22 @@ export default function ResumeBuilder({ form, setForm }) {
   const [selectedFont, setSelectedFont] = useState(RESUME_FONTS[0]);
   const previewRef = useRef(null);
 
+  // Mobile mode de-congestion states
+  const [mobileTab, setMobileTab] = useState("all"); // "all" | "personal" | "summary" | "skills" | "experience" | "education" | "projects" | "extra"
+  const [mobileMode, setMobileMode] = useState("edit"); // "edit" | "preview"
+
+  useEffect(() => {
+    if (mobileMode === "preview") {
+      const timer = setTimeout(() => {
+        const el = document.getElementById("resume-preview-section");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [mobileMode]);
+
   const [isTailorModalOpen, setIsTailorModalOpen] = useState(false);
   const [jobDescription, setJobDescription] = useState("");
   const [tailoring, setTailoring] = useState(false);
@@ -535,10 +551,12 @@ export default function ResumeBuilder({ form, setForm }) {
     }
   };
 
-  const skillsList = form.skills
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const skillsList = useMemo(() => {
+    return (form.skills || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }, [form.skills]);
 
   return (
     <div>
@@ -549,10 +567,10 @@ export default function ResumeBuilder({ form, setForm }) {
         <button
           className="secondary mobile-only-btn"
           onClick={() => {
+            setMobileMode("preview");
             const el = document.getElementById("resume-preview-section");
             if (el) {
-              const y = el.getBoundingClientRect().top + window.pageYOffset - 90;
-              window.scrollTo({ top: y, behavior: "smooth" });
+              el.scrollIntoView({ behavior: "smooth" });
             }
           }}
           style={{ marginTop: "0.75rem", padding: "0.4rem 1rem", fontSize: "0.85rem", borderRadius: "999px" }}
@@ -563,194 +581,218 @@ export default function ResumeBuilder({ form, setForm }) {
 
       <div className="container builder-layout" style={{ display: "flex", gap: "2rem", alignItems: "flex-start", paddingTop: 0 }}>
         {/* ===== FORM PANEL ===== */}
-        <div className="card" style={{ flex: 1, minWidth: 0 }}>
+        <div className="card" style={{ flex: 1, minWidth: 0, display: mobileMode === "edit" ? "block" : "none" }}>
+          {/* Mobile Section Nav Tabs */}
+          <div className="mobile-section-nav">
+            {[
+              { id: "all", label: "📋 All Sections" },
+              { id: "personal", label: "👤 Personal" },
+              { id: "summary", label: "📝 Summary" },
+              { id: "skills", label: "🛠️ Skills" },
+              { id: "experience", label: "💼 Experience" },
+              { id: "education", label: "🎓 Education" },
+              { id: "projects", label: "🚀 Projects" },
+              { id: "extra", label: "🏆 Extra" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={mobileTab === tab.id ? "active" : ""}
+                onClick={() => setMobileTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           {/* Contact Info */}
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div className="section-chip">👤 Personal Info</div>
-            <div className="form-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Full Name</label>
-                <input placeholder="John Doe" value={form.userName} onChange={(e) => update("userName", e.target.value)} />
-              </div>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Email</label>
-                <input placeholder="john@example.com" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
-              </div>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Phone</label>
-                <input placeholder="+1 (555) 000-0000" value={form.phone} onChange={(e) => update("phone", e.target.value)} />
-              </div>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>LinkedIn URL</label>
-                <input placeholder="linkedin.com/in/johndoe" value={form.linkedin || ""} onChange={(e) => update("linkedin", e.target.value)} />
-              </div>
-              <div className="form-group" style={{ marginBottom: 0, gridColumn: "1 / -1" }}>
-                <label>GitHub URL</label>
-                <input placeholder="github.com/johndoe" value={form.github || ""} onChange={(e) => update("github", e.target.value)} />
+          {(mobileTab === "all" || mobileTab === "personal") && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div className="section-chip">👤 Personal Info</div>
+              <div className="form-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Full Name</label>
+                  <input placeholder="John Doe" value={form.userName} onChange={(e) => update("userName", e.target.value)} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Email</label>
+                  <input placeholder="john@example.com" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Phone</label>
+                  <input placeholder="+1 (555) 000-0000" value={form.phone} onChange={(e) => update("phone", e.target.value)} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>LinkedIn URL</label>
+                  <input placeholder="linkedin.com/in/johndoe" value={form.linkedin || ""} onChange={(e) => update("linkedin", e.target.value)} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0, gridColumn: "1 / -1" }}>
+                  <label>GitHub URL</label>
+                  <input placeholder="github.com/johndoe" value={form.github || ""} onChange={(e) => update("github", e.target.value)} />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Summary */}
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div className="section-chip">📝 Summary</div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                <label style={{ margin: 0 }}>Professional Summary</label>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <AIGrammarFixButton
-                    currentText={form.summary}
-                    onSelect={(val) => update("summary", val)}
-                  />
-                  <AISuggestionButton
-                    field="summary"
-                    currentText={form.summary}
-                    skills={form.skills}
-                    onSelect={(val) => update("summary", val)}
-                  />
+          {(mobileTab === "all" || mobileTab === "summary") && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div className="section-chip">📝 Summary</div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <label style={{ margin: 0 }}>Professional Summary</label>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <AIGrammarFixButton
+                      currentText={form.summary}
+                      onSelect={(val) => update("summary", val)}
+                    />
+                    <AISuggestionButton
+                      field="summary"
+                      currentText={form.summary}
+                      skills={form.skills}
+                      onSelect={(val) => update("summary", val)}
+                    />
+                  </div>
                 </div>
+                <textarea placeholder="Brief overview of your skills and experience..." rows={3} value={form.summary} onChange={(e) => update("summary", e.target.value)} />
               </div>
-              <textarea placeholder="Brief overview of your skills and experience..." rows={3} value={form.summary} onChange={(e) => update("summary", e.target.value)} />
             </div>
-          </div>
+          )}
 
           {/* Skills */}
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div className="section-chip">🛠️ Skills</div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                <label style={{ margin: 0 }}>Technical Skills (comma separated)</label>
-                <AISuggestionButton
-                  field="skills"
-                  currentText={form.skills}
-                  role={form.experience && form.experience[0] ? form.experience[0].role : ""}
-                  onSelect={(val) => update("skills", val)}
-                />
+          {(mobileTab === "all" || mobileTab === "skills") && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div className="section-chip">🛠️ Skills</div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <label style={{ margin: 0 }}>Technical Skills (comma separated)</label>
+                  <AISuggestionButton
+                    field="skills"
+                    currentText={form.skills}
+                    role={form.experience && form.experience[0] ? form.experience[0].role : ""}
+                    onSelect={(val) => update("skills", val)}
+                  />
+                </div>
+                <input placeholder="React, Node.js, Python, SQL..." value={form.skills} onChange={(e) => update("skills", e.target.value)} />
               </div>
-              <input placeholder="React, Node.js, Python, SQL..." value={form.skills} onChange={(e) => update("skills", e.target.value)} />
             </div>
-          </div>
+          )}
 
           {/* Experience */}
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div className="section-chip">💼 Experience</div>
-            {form.experience.map((exp, i) => (
-              <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
-                <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
-                  <input placeholder="Company" value={exp.company} onChange={(e) => updateArrayField("experience", i, "company", e.target.value)} />
-                  <input placeholder="Role / Title" value={exp.role} onChange={(e) => updateArrayField("experience", i, "role", e.target.value)} />
-                </div>
-                <input placeholder="Duration (e.g. Jan 2023 – Dec 2024)" style={{ marginBottom: "0.5rem" }} value={exp.duration} onChange={(e) => updateArrayField("experience", i, "duration", e.target.value)} />
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                  <label style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600 }}>Job Description</label>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <AIGrammarFixButton
-                      currentText={exp.description}
-                      onSelect={(val) => updateArrayField("experience", i, "description", val)}
-                    />
-                    <AISuggestionButton
-                      field="experience"
-                      currentText={exp.description}
-                      role={exp.role}
-                      onSelect={(val) => updateArrayField("experience", i, "description", val)}
-                    />
+          {(mobileTab === "all" || mobileTab === "experience") && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div className="section-chip">💼 Experience</div>
+              {form.experience.map((exp, i) => (
+                <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
+                  <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
+                    <input placeholder="Company" value={exp.company} onChange={(e) => updateArrayField("experience", i, "company", e.target.value)} />
+                    <input placeholder="Role / Title" value={exp.role} onChange={(e) => updateArrayField("experience", i, "role", e.target.value)} />
                   </div>
+                  <input placeholder="Duration (e.g. Jan 2023 – Dec 2024)" style={{ marginBottom: "0.5rem" }} value={exp.duration} onChange={(e) => updateArrayField("experience", i, "duration", e.target.value)} />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                    <label style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600 }}>Job Description</label>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <AIGrammarFixButton
+                        currentText={exp.description}
+                        onSelect={(val) => updateArrayField("experience", i, "description", val)}
+                      />
+                      <AISuggestionButton
+                        field="experience"
+                        currentText={exp.description}
+                        role={exp.role}
+                        onSelect={(val) => updateArrayField("experience", i, "description", val)}
+                      />
+                    </div>
+                  </div>
+                  <textarea placeholder="Description (each new line = a bullet point)" rows={3} value={exp.description} onChange={(e) => updateArrayField("experience", i, "description", e.target.value)} style={{ marginBottom: "0.5rem" }} />
+                  <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("experience", i)}>✕ Remove</button>
                 </div>
-                <textarea placeholder="Description (each new line = a bullet point)" rows={3} value={exp.description} onChange={(e) => updateArrayField("experience", i, "description", e.target.value)} style={{ marginBottom: "0.5rem" }} />
-                <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("experience", i)}>✕ Remove</button>
-              </div>
-            ))}
-            <button className="secondary" onClick={() => addRow("experience", emptyExperience)}>+ Add Experience</button>
-          </div>
+              ))}
+              <button className="secondary" onClick={() => addRow("experience", emptyExperience)}>+ Add Experience</button>
+            </div>
+          )}
 
           {/* Education */}
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div className="section-chip">🎓 Education</div>
-            {form.education.map((edu, i) => (
-              <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
-                <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
-                  <input placeholder="School / University" value={edu.school} onChange={(e) => updateArrayField("education", i, "school", e.target.value)} />
-                  <input placeholder="Degree" value={edu.degree} onChange={(e) => updateArrayField("education", i, "degree", e.target.value)} />
+          {(mobileTab === "all" || mobileTab === "education") && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div className="section-chip">🎓 Education</div>
+              {form.education.map((edu, i) => (
+                <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
+                  <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
+                    <input placeholder="School / University" value={edu.school} onChange={(e) => updateArrayField("education", i, "school", e.target.value)} />
+                    <input placeholder="Degree" value={edu.degree} onChange={(e) => updateArrayField("education", i, "degree", e.target.value)} />
+                  </div>
+                  <input placeholder="Graduation Year (e.g. 2024)" style={{ marginBottom: "0.5rem" }} value={edu.year} onChange={(e) => updateArrayField("education", i, "year", e.target.value)} />
+                  <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("education", i)}>✕ Remove</button>
                 </div>
-                <input placeholder="Graduation Year (e.g. 2024)" style={{ marginBottom: "0.5rem" }} value={edu.year} onChange={(e) => updateArrayField("education", i, "year", e.target.value)} />
-                <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("education", i)}>✕ Remove</button>
-              </div>
-            ))}
-            <button className="secondary" onClick={() => addRow("education", emptyEducation)}>+ Add Education</button>
-          </div>
+              ))}
+              <button className="secondary" onClick={() => addRow("education", emptyEducation)}>+ Add Education</button>
+            </div>
+          )}
 
           {/* Projects */}
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div className="section-chip">🚀 Projects</div>
-            {form.projects && form.projects.map((proj, i) => (
-              <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
-                <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
-                  <input placeholder="Project Name" value={proj.name} onChange={(e) => updateArrayField("projects", i, "name", e.target.value)} />
-                  <input placeholder="Tech Stack" value={proj.techStack} onChange={(e) => updateArrayField("projects", i, "techStack", e.target.value)} />
+          {(mobileTab === "all" || mobileTab === "projects") && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div className="section-chip">🚀 Projects</div>
+              {form.projects && form.projects.map((proj, i) => (
+                <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
+                  <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
+                    <input placeholder="Project Name" value={proj.name} onChange={(e) => updateArrayField("projects", i, "name", e.target.value)} />
+                    <input placeholder="Tech Stack" value={proj.techStack} onChange={(e) => updateArrayField("projects", i, "techStack", e.target.value)} />
+                  </div>
+                  <input placeholder="Project Link / URL" style={{ marginBottom: "0.5rem" }} value={proj.link} onChange={(e) => updateArrayField("projects", i, "link", e.target.value)} />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                    <label style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600 }}>Project Description</label>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <AIGrammarFixButton
+                        currentText={proj.description}
+                        onSelect={(val) => updateArrayField("projects", i, "description", val)}
+                      />
+                      <AISuggestionButton
+                        field="project"
+                        currentText={proj.description}
+                        role={proj.name}
+                        skills={proj.techStack}
+                        onSelect={(val) => updateArrayField("projects", i, "description", val)}
+                      />
+                    </div>
+                  </div>
+                  <textarea placeholder="Description (each line = bullet point)" rows={3} value={proj.description} onChange={(e) => updateArrayField("projects", i, "description", e.target.value)} style={{ marginBottom: "0.5rem" }} />
+                  <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("projects", i)}>✕ Remove</button>
                 </div>
-                <input placeholder="Project Link / URL" style={{ marginBottom: "0.5rem" }} value={proj.link} onChange={(e) => updateArrayField("projects", i, "link", e.target.value)} />
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                  <label style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600 }}>Project Description</label>
+              ))}
+              <button className="secondary" onClick={() => addRow("projects", emptyProject)}>+ Add Project</button>
+            </div>
+          )}
+
+          {/* Extra */}
+          {(mobileTab === "all" || mobileTab === "extra") && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div className="section-chip">🏆 Extra</div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <label style={{ margin: 0 }}>Awards, Certifications, Languages, etc.</label>
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     <AIGrammarFixButton
-                      currentText={proj.description}
-                      onSelect={(val) => updateArrayField("projects", i, "description", val)}
+                      currentText={form.extra || ""}
+                      onSelect={(val) => update("extra", val)}
                     />
                     <AISuggestionButton
-                      field="project"
-                      currentText={proj.description}
-                      role={proj.name}
-                      skills={proj.techStack}
-                      onSelect={(val) => updateArrayField("projects", i, "description", val)}
+                      field="extra"
+                      currentText={form.extra || ""}
+                      role={form.experience && form.experience[0] ? form.experience[0].role : ""}
+                      skills={form.skills}
+                      onSelect={(val) => update("extra", val)}
                     />
                   </div>
                 </div>
-                <textarea placeholder="Description (each line = bullet point)" rows={3} value={proj.description} onChange={(e) => updateArrayField("projects", i, "description", e.target.value)} style={{ marginBottom: "0.5rem" }} />
-                <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("projects", i)}>✕ Remove</button>
+                <textarea placeholder="e.g. AWS Certified Developer, Fluent in Spanish, Dean's List 2023..." rows={3} value={form.extra || ""} onChange={(e) => update("extra", e.target.value)} />
               </div>
-            ))}
-            <button className="secondary" onClick={() => addRow("projects", emptyProject)}>+ Add Project</button>
-          </div>
-
-          {/* Extra */}
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div className="section-chip">🏆 Extra</div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                <label style={{ margin: 0 }}>Awards, Certifications, Languages, etc.</label>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <AIGrammarFixButton
-                    currentText={form.extra || ""}
-                    onSelect={(val) => update("extra", val)}
-                  />
-                  <AISuggestionButton
-                    field="extra"
-                    currentText={form.extra || ""}
-                    role={form.experience && form.experience[0] ? form.experience[0].role : ""}
-                    skills={form.skills}
-                    onSelect={(val) => update("extra", val)}
-                  />
-                </div>
-              </div>
-              <textarea placeholder="e.g. AWS Certified Developer, Fluent in Spanish, Dean's List 2023..." rows={3} value={form.extra || ""} onChange={(e) => update("extra", e.target.value)} />
             </div>
-          </div>
+          )}
 
           {/* Actions */}
           <div className="builder-actions btn-group-responsive" style={{ paddingTop: "0.5rem", borderTop: "1px solid var(--border)" }}>
-            <button
-              className="secondary mobile-only-btn"
-              onClick={() => {
-                const el = document.getElementById("resume-preview-section");
-                if (el) {
-                  const y = el.getBoundingClientRect().top + window.pageYOffset - 90;
-                  window.scrollTo({ top: y, behavior: "smooth" });
-                }
-              }}
-              style={{ flex: 1 }}
-            >
-              👁️ Check Resume ↓
-            </button>
             <button onClick={downloadPDF} disabled={downloading} style={{ flex: 1 }}>
               {downloading ? "⏳ Generating PDF..." : "⬇️ Download PDF"}
             </button>
@@ -787,7 +829,7 @@ export default function ResumeBuilder({ form, setForm }) {
         </div>
 
         {/* ===== LIVE PREVIEW PANEL ===== */}
-        <div id="resume-preview-section" className="resume-preview-wrapper" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div id="resume-preview-section" className="resume-preview-wrapper" style={{ flex: 1, minWidth: 0, display: mobileMode === "preview" ? "flex" : undefined, flexDirection: "column", alignItems: "center" }}>
           {/* Header bar */}
           <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1rem 1.25rem", width: "100%", marginBottom: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -798,7 +840,10 @@ export default function ResumeBuilder({ form, setForm }) {
               <button
                 type="button"
                 className="secondary"
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                onClick={() => {
+                  setMobileMode("edit");
+                  window.scrollTo(0, 0);
+                }}
                 style={{ fontSize: "0.75rem", padding: "0.25rem 0.6rem", borderRadius: "6px" }}
               >
                 ↑ Back to Editor
@@ -1120,19 +1165,39 @@ export default function ResumeBuilder({ form, setForm }) {
                   >
                     ✅ Apply Changes
                   </button>
-                  <button
-                    className="secondary"
-                    onClick={() => setTailoredPreview(null)}
-                    style={{ flex: 0.5 }}
-                  >
-                    Back
-                  </button>
                 </div>
               </>
             )}
           </div>
         </div>
       )}
+
+      {/* Mobile Mode Floating Switcher Bar */}
+      <div className="mobile-floating-switcher">
+        <button
+          type="button"
+          className={mobileMode === "edit" ? "active" : ""}
+          onClick={() => {
+            setMobileMode("edit");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
+          ✏️ Edit Form
+        </button>
+        <button
+          type="button"
+          className={mobileMode === "preview" ? "active" : ""}
+          onClick={() => {
+            setMobileMode("preview");
+            const el = document.getElementById("resume-preview-section");
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth" });
+            }
+          }}
+        >
+          👁️ Preview
+        </button>
+      </div>
     </div>
   );
 }

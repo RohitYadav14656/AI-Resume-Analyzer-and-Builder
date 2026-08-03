@@ -12,6 +12,7 @@ const analyzeRoutes = require("./routes/analyze");
 const authRoutes = require("./routes/auth");
 const { globalLimiter, analyzeLimiter } = require("./middleware/rateLimiter");
 const errorHandler = require("./middleware/errorHandler");
+const sanitizeInput = require("./middleware/sanitizeInput");
 const AppError = require("./utils/AppError");
 
 const app = express();
@@ -49,13 +50,15 @@ app.use(cookieParser());
 
 // ─── NoSQL Injection Prevention ───────────────────────────────────────────────
 // Strips $ and . operators from req.body, req.params, req.query.
-// Prevents attacks like: { "email": { "$gt": "" } } bypassing auth queries.
 app.use(
   mongoSanitize({
-    replaceWith: "_",        // replace prohibited chars instead of silently deleting
-    onSanitizeHtml: () => {}, // no-op — we don't serve HTML
+    replaceWith: "_",
+    onSanitizeHtml: () => {},
   })
 );
+
+// ─── XSS & Script Tag Sanitization Middleware ───────────────────────────────
+app.use(sanitizeInput);
 
 // ─── Global Rate Limiter ──────────────────────────────────────────────────────
 app.use(globalLimiter);
@@ -92,7 +95,6 @@ mongoose
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err.message);
-    // Start server anyway so the analyzer (which doesn't need DB) still works
     app.listen(PORT, () =>
       console.log(`Server running on port ${PORT} (no DB connection)`)
     );

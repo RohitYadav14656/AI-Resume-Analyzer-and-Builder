@@ -112,7 +112,13 @@ export default function App() {
     }
   }, []);
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToTop = () => window.scrollTo(0, 0);
+
+  const preloadRoute = (to) => {
+    if (to === "builder") import("./pages/ResumeBuilder");
+    else if (to === "analyzer") import("./pages/ResumeAnalyzer");
+    else if (to === "login") import("./pages/Auth");
+  };
 
   const navigate = (to) => {
     setMobileMenuOpen(false);
@@ -188,12 +194,14 @@ export default function App() {
             <>
               <button
                 className={`nav-link ${view === "builder" ? "active" : ""}`}
+                onMouseEnter={() => preloadRoute("builder")}
                 onClick={() => navigate("builder")}
               >
                 ✏️ Resume Builder
               </button>
               <button
                 className={`nav-link ${view === "analyzer" ? "active" : ""}`}
+                onMouseEnter={() => preloadRoute("analyzer")}
                 onClick={() => navigate("analyzer")}
               >
                 🔍 AI Analyzer
@@ -201,8 +209,8 @@ export default function App() {
             </>
           ) : view === "home" ? (
             <>
-              <button className="nav-link" onClick={() => navigate("builder")}>Builder</button>
-              <button className="nav-link" onClick={() => navigate("analyzer")}>Analyzer</button>
+              <button className="nav-link" onMouseEnter={() => preloadRoute("builder")} onClick={() => navigate("builder")}>Builder</button>
+              <button className="nav-link" onMouseEnter={() => preloadRoute("analyzer")} onClick={() => navigate("analyzer")}>Analyzer</button>
             </>
           ) : null}
         </div>
@@ -227,6 +235,7 @@ export default function App() {
               <button
                 className="btn-nav secondary"
                 style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-main)", padding: "0.5rem 1.1rem", fontSize: "0.875rem", borderRadius: "8px", boxShadow: "none" }}
+                onMouseEnter={() => preloadRoute("login")}
                 onClick={() => navigate("login")}
               >
                 Log In
@@ -234,6 +243,7 @@ export default function App() {
               <button
                 className="btn-nav"
                 style={{ padding: "0.5rem 1.1rem", fontSize: "0.875rem", borderRadius: "8px" }}
+                onMouseEnter={() => preloadRoute("builder")}
                 onClick={() => {
                   setRedirectTarget("builder");
                   setView("login");

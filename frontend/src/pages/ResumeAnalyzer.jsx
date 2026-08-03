@@ -295,8 +295,26 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
               <input
                 type="file"
                 id="resume-file-input"
-                accept=".pdf,.docx"
-                onChange={(e) => { setFile(e.target.files[0]); setResult(null); setError(""); }}
+                accept=".pdf,.docx,.txt"
+                onChange={(e) => {
+                  const selected = e.target.files[0];
+                  if (selected) {
+                    if (selected.size > 5 * 1024 * 1024) {
+                      setError("File size exceeds 5 MB limit. Please select a smaller PDF or DOCX file.");
+                      setFile(null);
+                      return;
+                    }
+                    const ext = selected.name.split(".").pop().toLowerCase();
+                    if (!["pdf", "docx", "txt"].includes(ext)) {
+                      setError("Invalid file format. Only .pdf, .docx, and .txt files are allowed.");
+                      setFile(null);
+                      return;
+                    }
+                  }
+                  setFile(selected);
+                  setResult(null);
+                  setError("");
+                }}
                 style={{ display: "none" }}
               />
               <label htmlFor="resume-file-input" style={{ cursor: "pointer", display: "block" }}>
@@ -315,7 +333,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                       Click to upload your resume
                     </div>
                     <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                      Supports .pdf and .docx files
+                      Supports .pdf, .docx, and .txt files (Max 5MB)
                     </div>
                   </>
                 )}
@@ -349,9 +367,9 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
               </button>
             </div>
 
-            {/* Role Preset Chips */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500 }}>Quick Presets:</span>
+            {/* Role Preset Chips (Scrollable on Mobile) */}
+            <div className="preset-chip-scroll">
+              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 }}>Quick Presets:</span>
               {[
                 "Full Stack Developer",
                 "Frontend React Engineer",
@@ -362,6 +380,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                 <button
                   key={role}
                   type="button"
+                  className="chip-btn"
                   onClick={() => handleSuggestJobDesc(role)}
                   disabled={suggestingJobDesc}
                   style={{
@@ -370,7 +389,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                     color: "var(--text-main)",
                     fontSize: "0.72rem",
                     borderRadius: "6px",
-                    padding: "0.15rem 0.45rem",
+                    padding: "0.25rem 0.5rem",
                     cursor: "pointer",
                     transition: "all 0.15s ease"
                   }}
