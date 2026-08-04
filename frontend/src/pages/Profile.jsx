@@ -1025,7 +1025,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
           </motion.div>
         ) : (
           /* RESUME CARDS GRID */
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.25rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.25rem" }}>
             {savedResumes.map((resume, idx) => (
               <motion.div
                 key={resume._id || idx}
@@ -1080,44 +1080,40 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                 </div>
 
                 {/* Actions Bar */}
-                <div style={{ paddingTop: "0.85rem", borderTop: "1px solid var(--border)", display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <div className="profile-actions-bar">
                   <button
-                    className="secondary"
+                    className="secondary profile-action-btn"
                     onClick={() => handleEditInBuilder(resume)}
                     title="Edit in Builder"
-                    style={{ flex: 1, fontSize: "0.8rem", padding: "0.45rem 0.6rem" }}
                   >
                     <Edit3 size={13} /> Edit
                   </button>
                   <button
-                    className="secondary"
+                    className="secondary profile-action-btn"
                     onClick={() => navigate("analyzer")}
                     title="Run AI Analysis"
-                    style={{ flex: 1, fontSize: "0.8rem", padding: "0.45rem 0.6rem" }}
                   >
                     <Search size={13} /> Analyze
                   </button>
                   <button
-                    className="secondary"
+                    className="secondary profile-action-btn"
                     onClick={() => handleEditInBuilder(resume)}
                     title="Download PDF"
-                    style={{ flex: 1, fontSize: "0.8rem", padding: "0.45rem 0.6rem" }}
                   >
                     <Download size={13} /> PDF
                   </button>
                   <button
-                    className="secondary"
+                    className="secondary profile-icon-btn"
                     onClick={() => handleDuplicateResume(resume)}
                     title="Duplicate Resume"
-                    style={{ padding: "0.45rem 0.6rem" }}
                   >
                     <Copy size={13} />
                   </button>
                   <button
+                    className="profile-icon-btn"
                     onClick={() => handleDeleteResume(resume._id)}
                     title="Delete Resume"
                     style={{
-                      padding: "0.45rem 0.6rem",
                       background: "rgba(225, 29, 72, 0.1)",
                       color: "var(--danger)",
                       border: "none",
