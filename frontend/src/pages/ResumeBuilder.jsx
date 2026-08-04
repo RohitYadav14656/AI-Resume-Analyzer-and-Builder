@@ -508,6 +508,10 @@ export default function ResumeBuilder({ form, setForm }) {
 
       // Auto-save to database in the background when downloading PDF
       saveToDB(true);
+      api.post("/api/user/activity", {
+        action: "Resume Downloaded",
+        description: `Exported PDF copy of resume "${form.userName || "Untitled"}"`
+      }).catch(() => {});
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("Failed to generate PDF. Please try again.");

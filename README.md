@@ -1,143 +1,94 @@
 # 🚀 AI Resume Builder & Analyzer (MERN)
 
-[![GitHub License](https://img.shields.io/github/license/groq/groq-feedback-app?color=blue)](LICENSE)
 [![Groq Llama-3.3-70B](https://img.shields.io/badge/AI-Groq%20Llama--3.3--70B-orange)](https://groq.com)
 [![MERN Stack](https://img.shields.io/badge/Stack-MERN-green)](https://react.dev)
 
-An AI-powered, production-grade application designed to build ATS-optimized resumes and provide real-time, detailed AI screening analysis utilizing Groq's Llama-3.3-70B model.
+An AI-powered, production-grade web application designed to build ATS-optimized resumes, perform instant AI screening audits, track career progress, and manage personalized student profiles using Groq's Llama-3.3-70B model.
 
 **Cost:** **$0**. Uses Groq's free API tier for AI analysis and MongoDB Atlas free tier (or local MongoDB) for database storage.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-- **ATS-Optimized Resume Builder:** Seamlessly draft and compile professional resumes.
-- **AI-Powered Screening & Parsing:** Upload your PDF/DOCX resume and receive instant feedback, scores, and improvement recommendations from Llama-3.3-70B.
-- **AI-Powered Grammar Checker & Fixer:** Fix grammatical, spelling, and style errors in real time with detailed correction breakdowns using Groq Llama-3.3-70B.
-- **Production-Grade Security:** Out-of-the-box configurations preventing major Web/NoSQL vulnerabilities.
-- **Invisible Text Layer Embedding:** Preserves high-fidelity visual PDF representations while embedding searchable/readable plain text for ATS parsers.
+- **ATS-Optimized Resume Builder:** Draft, edit, and compile professional resumes with real-time PDF previews.
+- **AI-Powered Screening & Parsing:** Upload PDF/DOCX resumes for instant ATS compatibility scores, strengths, weaknesses, and keyword recommendations powered by Llama-3.3-70B.
+- **Student Profile & Dashboard:** Personal profile hub tracking total resumes created, AI analyses completed, peak ATS scores, project counts, and PDF downloads.
+- **AI Personalization Controls:** Opt-in toggle allowing AI engines to use stored background details to auto-fill forms and generate targeted summaries.
+- **LinkedIn & GitHub Integration:** Seamlessly add and link professional LinkedIn and GitHub profiles directly to user accounts.
+- **Privacy & Data Control:** Trust-focused section allowing users to update info, stream full JSON data exports, or permanently delete accounts.
+- **Recent Activity Timeline:** Real-time event log tracking resume creation, updates, ATS audits, PDF exports, and AI suggestions.
+- **AI-Powered Grammar & Style Fixer:** Correct spelling, syntax, and action-verb impact in real-time.
+- **Invisible Text Layer PDF Embedding:** Embeds a searchable plain-text layer on PDF exports to guarantee 100% ATS readability.
 
 ---
 
-## 🔒 Advanced Security Implementations
+## 🔒 Security & Architecture
 
-This project includes production-grade security implementations to prevent common web application vulnerabilities:
+### 1. Session Protection (JWT + HttpOnly Cookies)
+- **Short-Lived Access Tokens**: Stored strictly in memory on the client side (mitigating XSS vulnerabilities).
+- **HttpOnly Refresh Cookies**: Long-lived Refresh Tokens stored in `HttpOnly`, `SameSite=Strict`, `Secure` cookies.
+- **Refresh Token Rotation (RTR)**: Rotates token pairs on every refresh to invalidate stolen sessions.
+- **Automatic Session Restoration**: Client auto-restores in-memory tokens on page startup without unauthenticated errors.
 
-### 1. Session Hijacking Prevention (JWT + HttpOnly Cookie Rotation)
-*   **Short-Lived Access Tokens**: JWT Access Tokens are valid for only **15 minutes** and are stored **strictly in-memory** on the frontend (never saved to `localStorage` or standard cookies, mitigating XSS attacks).
-*   **HttpOnly Refresh Cookies**: Long-lived Refresh Tokens are stored in a secure cookie with the flags `HttpOnly`, `SameSite=Strict`, `Secure` (production), and restricted to `/api/auth`. JavaScript cannot access this cookie.
-*   **Refresh Token Rotation (RTR)**: Every call to `/api/auth/refresh` deletes the old refresh token database record and issues a brand-new pair, making intercepted refresh tokens useless.
-*   **Client Fingerprinting**: Tokens are bound to a browser fingerprint (User-Agent hash) — if an attacker steals an active session token and attempts to use it from another device, the request is rejected.
-*   **DB-Backed Token Invalidation**: Logout cleanly deletes active sessions from MongoDB.
-
-### 2. NoSQL Injection Prevention
-*   **Input Sanitization**: Equipped with `express-mongo-sanitize` to strip prohibited characters (`$` and `.`) from all payloads, preventing attackers from bypassing login with queries like `{ "email": { "$gt": "" } }`.
-*   **Zod Schema Hardening**: All inputs are strictly checked against schemas with `.strip()` enabled, discarding any unknown properties or malicious query objects.
-
-### 3. Invisible Text PDF Layer (ATS-Friendliness Fix)
-*   Standard client-side PDF libraries (like `html2pdf.js`) generate PDFs by capturing an image screenshot of the HTML canvas, meaning there is no selectable text layer. This fails ATS filters and backend text parsing.
-*   **Our Solution**: When generating the PDF, we extract a plain-text version of the resume and embed it as an **invisible, selectable text layer** (white color, 1pt size) on the PDF page. The PDF remains visually perfect while being **100% readable by ATS systems** and backend parser engines.
-
-### 4. Google OAuth & Email Verification Flows
-*   **Google OAuth Integration**: Allows seamless authentication using Google Accounts with secure JWT generation.
-*   **Nodemailer Email Workflows**: Integrated system for secure transactional emails, including HTML-styled password resets and verification.
+### 2. NoSQL & Input Protection
+- **Sanitization**: Equipped with `express-mongo-sanitize` to strip `$` and `.` operators.
+- **Schema Validation**: All payloads validated with Zod schemas.
 
 ---
 
 ## 🛠️ Getting Started
 
 ### Prerequisites
-- [Node.js](https://nodejs.org) (v18.x or higher recommended)
-- [MongoDB](https://www.mongodb.com/try/download/community) (running locally or MongoDB Atlas connection string)
-- [Groq API Key](https://console.groq.com)
-- [Google Client ID](https://console.cloud.google.com) (for Google OAuth authentication)
-- SMTP Server details (Gmail App Password, Mailtrap, etc. for email notifications)
+- Node.js (v18.x or higher)
+- MongoDB (local or MongoDB Atlas connection string)
+- Groq API Key
+- Google Client ID (for Google OAuth)
 
 ---
 
 ### Step-by-Step Installation
 
-#### 1. Obtain API Credentials
-1. **Groq Key**: Navigate to [console.groq.com/keys](https://console.groq.com/keys), sign up/log in, and click **"Create API Key"**.
-2. **Google Client ID**: Navigate to [console.cloud.google.com](https://console.cloud.google.com), create a project, go to APIs & Services → Credentials, configure the OAuth Consent Screen, create an OAuth 2.0 Client ID, and add `http://localhost:5173` to the Authorized JavaScript Origins.
+#### 1. Backend Setup
+```bash
+cd backend
+npm install
+cp .env.example .env
+```
 
-#### 2. Backend Setup
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Install the backend dependencies:
-   ```bash
-   npm install
-   ```
-3. Copy the template environment file:
-   - **Linux/macOS:**
-     ```bash
-     cp .env.example .env
-     ```
-   - **Windows (Command Prompt):**
-     ```cmd
-     copy .env.example .env
-     ```
-   - **Windows (PowerShell):**
-     ```powershell
-     Copy-Item .env.example .env
-     ```
-4. Open the newly created `.env` file and configure your variables:
-   ```env
-   PORT=5000
-   MONGO_URI=mongodb://127.0.0.1:27017/resume_ai
-   GROQ_API_KEY=your_groq_api_key_here
-   JWT_SECRET=your_strong_jwt_secret_here
-   ALLOWED_ORIGINS=http://localhost:5173
+Configure `.env`:
+```env
+PORT=5000
+MONGO_URI=mongodb://127.0.0.1:27017/resume_ai
+GROQ_API_KEY=your_groq_api_key_here
+JWT_SECRET=your_strong_jwt_secret_here
+ALLOWED_ORIGINS=http://localhost:5173
+GOOGLE_CLIENT_ID=your_google_client_id_here
+```
 
-   # Google OAuth
-   GOOGLE_CLIENT_ID=your_google_client_id_here
+Start dev server:
+```bash
+npm run dev
+```
 
-   # Email (Nodemailer)
-   EMAIL_HOST=smtp.gmail.com
-   EMAIL_PORT=587
-   EMAIL_USER=your_email_here
-   EMAIL_PASS=your_email_app_password_here
-   EMAIL_FROM="Resume AI <your_email_here>"
+#### 2. Frontend Setup
+```bash
+cd ../frontend
+npm install
+cp .env.example .env
+```
 
-   # Frontend URL
-   FRONTEND_URL=http://localhost:5173
-   ```
-5. Spin up the backend development server:
-   ```bash
-   npm run dev
-   ```
-   *Note: If MongoDB is not connected, the server will start and the **Analyzer** (which is stateless) will still function. Only saving resume records requires MongoDB.*
+Configure `.env`:
+```env
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
+```
 
-#### 3. Frontend Setup
-1. Navigate to the frontend directory:
-   ```bash
-   cd ../frontend
-   ```
-2. Install the frontend dependencies:
-   ```bash
-   npm install
-   ```
-3. Copy the template environment file:
-   - **Linux/macOS:**
-     ```bash
-     cp .env.example .env
-     ```
-   - **Windows (Command Prompt / PowerShell):**
-     ```powershell
-     Copy-Item .env.example .env
-     ```
-4. Open `.env` and enter your Google Client ID:
-   ```env
-   VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
-   ```
-5. Start the frontend development server:
-   ```bash
-   npm run dev
-   ```
-6. Access the web interface at `http://localhost:5173`.
+Start dev server:
+```bash
+npm run dev
+```
+
+Access app at `http://localhost:5173`.
 
 ---
 
@@ -146,17 +97,17 @@ This project includes production-grade security implementations to prevent commo
 ```
 .
 ├── backend (Express/Node)
-│   ├── middleware/     → Rate-limiting, Zod schema validation, error handlers
-│   ├── models/         → User database schema and TTL-indexed RefreshToken database
-│   ├── routes/         → Endpoint routes (auth, analyze, resume)
-│   ├── uploads/        → Temporary folder for resume uploads (.pdf, .docx)
-│   ├── utils/          → Token fingerprinting, emailUtils.js, & parseResume (pdf-parse / mammoth)
-│   ├── validators/     → Input schemas & Zod validators (authValidator.js)
-│   └── server.js       → Server entry point & DB connections
+│   ├── middleware/     → Rate-limiting, Zod validation, security, error handling
+│   ├── models/         → User, Resume, and RefreshToken schemas
+│   ├── routes/         → auth.js, analyze.js, resume.js, user.js
+│   ├── uploads/        → Temporary storage for resume uploads (.pdf, .docx)
+│   ├── utils/          → Token utilities, email, and resume text parsing
+│   ├── validators/     → Input schemas & Zod validators
+│   └── server.js       → Application entry point
 └── frontend (React/Vite)
     ├── src/
-    │   ├── api.js      → Axios interceptor instance (automates silent token refresh)
-    │   ├── pages/      → Auth.jsx, ResetPassword.jsx, ResumeBuilder.jsx, ResumeAnalyzer.jsx
-    │   └── main.jsx    → Application entry point
+    │   ├── api.js      → Axios instance & profile API helpers
+    │   ├── pages/      → Profile.jsx, ResumeBuilder.jsx, ResumeAnalyzer.jsx, Auth.jsx, ResetPassword.jsx
+    │   └── main.jsx    → Frontend entry point
     └── index.html      → Base HTML template
 ```

@@ -53,6 +53,48 @@ const UserSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // ── Profile & AI Customization ──────────────────────────────────────────
+    headline: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    university: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    linkedin: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    github: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    avatar: {
+      type: String,
+      default: "",
+    },
+    aiPersonalization: {
+      type: Boolean,
+      default: true,
+    },
+    notificationPreferences: {
+      emailAlerts: { type: Boolean, default: true },
+      resumeTips: { type: Boolean, default: true },
+      weeklySummary: { type: Boolean, default: false },
+    },
+    recentActivity: [
+      {
+        action: { type: String, required: true },
+        description: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );

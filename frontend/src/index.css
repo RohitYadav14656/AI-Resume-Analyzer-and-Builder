@@ -1817,5 +1817,88 @@ button.secondary:hover::after {
   }
 }
 
+/* ============ PROFILE PAGE STYLES ============ */
+.profile-header-card {
+  box-shadow: 0 10px 30px -5px rgba(46, 37, 32, 0.05), 0 4px 12px -2px rgba(217, 119, 6, 0.04);
+}
+
+.profile-header-glow {
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(217, 119, 6, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .profile-header-grid {
+    grid-template-columns: 1fr !important;
+    text-align: center;
+    justify-items: center;
+  }
+  .profile-header-grid > div:last-child {
+    align-items: center !important;
+    width: 100%;
+  }
+  .profile-header-grid button {
+    width: 100%;
+  }
+}
+
+.profile-completion-box {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.profile-completion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.profile-completion-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.profile-completion-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.profile-completion-msg {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 640px) {
+  .profile-completion-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
+  .profile-completion-title,
+  .profile-completion-badge {
+    word-break: break-word;
+  }
+}
+
+
+
 
 

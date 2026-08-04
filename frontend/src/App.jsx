@@ -8,6 +8,7 @@ const ResumeBuilder = lazy(() => import("./pages/ResumeBuilder"));
 const ResumeAnalyzer = lazy(() => import("./pages/ResumeAnalyzer"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Profile = lazy(() => import("./pages/Profile"));
 const ResumeScene3D = lazy(() => import("./components/ResumeScene3D"));
 const RiveCTA = lazy(() => import("./components/RiveCTA"));
 
@@ -48,7 +49,7 @@ const emptyExperience = { company: "", role: "", duration: "", description: "" }
 const emptyEducation = { school: "", degree: "", year: "" };
 
 export default function App() {
-  const [view, setView] = useState("home"); // "home" | "builder" | "analyzer" | "login"
+  const [view, setView] = useState("home"); // "home" | "builder" | "analyzer" | "login" | "profile"
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
@@ -86,6 +87,31 @@ export default function App() {
     }
   }, [user]);
 
+  // Silent session restore on app mount: fetches access token into memory using HttpOnly cookie
+  useEffect(() => {
+    async function restoreSession() {
+      if (user) {
+        try {
+          const { data } = await api.post("/api/auth/refresh");
+          if (data.accessToken) {
+            setAccessToken(data.accessToken);
+            setIsAuthenticated(true);
+            if (data.user) {
+              setUser(data.user);
+              localStorage.setItem("user", JSON.stringify(data.user));
+            }
+          }
+        } catch (err) {
+          clearAccessToken();
+          setUser(null);
+          setIsAuthenticated(false);
+          localStorage.removeItem("user");
+        }
+      }
+    }
+    restoreSession();
+  }, []);
+
   // Detect password reset token OR email verification result in URL on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -118,11 +144,12 @@ export default function App() {
     if (to === "builder") import("./pages/ResumeBuilder");
     else if (to === "analyzer") import("./pages/ResumeAnalyzer");
     else if (to === "login") import("./pages/Auth");
+    else if (to === "profile") import("./pages/Profile");
   };
 
   const navigate = (to) => {
     setMobileMenuOpen(false);
-    if ((to === "builder" || to === "analyzer") && !user) {
+    if ((to === "builder" || to === "analyzer" || to === "profile") && !user) {
       setRedirectTarget(to);
       setView("login");
     } else {
@@ -219,9 +246,28 @@ export default function App() {
         <div className="navbar-actions navbar-desktop-only">
           {user ? (
             <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-              <span style={{ fontSize: "0.9rem", fontWeight: "600", color: "var(--text-main)" }}>
-                👤 {user.name}
-              </span>
+              <button
+                onClick={() => navigate("profile")}
+                onMouseEnter={() => preloadRoute("profile")}
+                title="View & Edit Profile"
+                style={{
+                  background: view === "profile" ? "var(--primary-light)" : "transparent",
+                  border: view === "profile" ? "1.5px solid var(--accent)" : "1.5px solid var(--border)",
+                  color: "var(--text-main)",
+                  padding: "0.45rem 1rem",
+                  fontSize: "0.875rem",
+                  borderRadius: "20px",
+                  boxShadow: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.4rem",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <span style={{ fontSize: "1rem" }}>👤</span>
+                <span style={{ fontWeight: "700" }}>{user.name}</span>
+              </button>
               <button
                 className="btn-nav secondary"
                 style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-main)", padding: "0.5rem 1.1rem", fontSize: "0.875rem", borderRadius: "8px", boxShadow: "none" }}
@@ -308,7 +354,11 @@ export default function App() {
             <div className="mobile-menu-auth">
               {user ? (
                 <>
-                  <div className="mobile-user-info">
+                  <div
+                    className="mobile-user-info"
+                    onClick={() => navigate("profile")}
+                    style={{ cursor: "pointer" }}
+                  >
                     <span className="mobile-user-avatar">👤</span>
                     <div>
                       <div className="mobile-user-name">{user.name}</div>
@@ -400,6 +450,7 @@ export default function App() {
         {view === "home" && <HeroPage navigate={navigate} />}
         {view === "builder" && <ResumeBuilder form={form} setForm={setForm} />}
         {view === "analyzer" && <ResumeAnalyzer form={form} setForm={setForm} setView={setView} />}
+        {view === "profile" && <Profile user={user} setUser={setUser} navigate={navigate} setForm={setForm} handleLogout={handleLogout} />}
         {view === "login" && <Auth onAuthSuccess={handleAuthSuccess} />}
         {view === "reset-password" && (
           <ResetPassword
