@@ -90,23 +90,22 @@ export default function App() {
   // Silent session restore on app mount: fetches access token into memory using HttpOnly cookie
   useEffect(() => {
     async function restoreSession() {
-      if (user) {
-        try {
-          const { data } = await api.post("/api/auth/refresh");
-          if (data.accessToken) {
-            setAccessToken(data.accessToken);
-            setIsAuthenticated(true);
-            if (data.user) {
-              setUser(data.user);
-              localStorage.setItem("user", JSON.stringify(data.user));
-            }
+      try {
+        const { data } = await api.post("/api/auth/refresh");
+        if (data.accessToken) {
+          setAccessToken(data.accessToken);
+          setIsAuthenticated(true);
+          if (data.user) {
+            setUser(data.user);
+            localStorage.setItem("user", JSON.stringify(data.user));
           }
-        } catch (err) {
-          clearAccessToken();
-          setUser(null);
-          setIsAuthenticated(false);
-          localStorage.removeItem("user");
         }
+      } catch (err) {
+        // Clear session if refresh cookie is invalid or expired
+        clearAccessToken();
+        setUser(null);
+        setIsAuthenticated(false);
+        localStorage.removeItem("user");
       }
     }
     restoreSession();
