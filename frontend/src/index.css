@@ -1363,6 +1363,32 @@ button.secondary:hover::after {
   }
 }
 
+/* Site Footer & Spacing Cleanup */
+.site-footer-basic {
+  background: var(--surface-1) !important;
+  border-top: 1px solid var(--border) !important;
+  padding: 1.5rem 1rem !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  width: 100% !important;
+}
+
+.footer-basic-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.footer-bullet {
+  margin: 0 0.6rem;
+  color: var(--accent);
+}
+
 /* ----- Mobile: 576px ----- */
 @media (max-width: 576px) {
   .btn-group-responsive {
