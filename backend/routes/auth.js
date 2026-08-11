@@ -246,25 +246,38 @@ router.post("/admin-request-otp", async (req, res, next) => {
 
     // 1. Verify credentials
     let isAdminValid = false;
-    let adminUserObj = null;
+    let adminUser = await User.findOne({ email: cleanEmail }).select("+password");
 
     if (cleanEmail === "admin@resumeai.com" && password === "admin123") {
       isAdminValid = true;
-      adminUserObj = { id: "admin-id", name: "System Admin", email: "admin@resumeai.com", role: "admin" };
-    } else {
-      const user = await User.findOne({ email: cleanEmail }).select("+password");
-      if (user && user.role === "admin" && user.password) {
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) {
-          isAdminValid = true;
-          adminUserObj = { id: user._id, name: user.name, email: user.email, role: "admin" };
-        }
+      if (!adminUser) {
+        const hashedPassword = await bcrypt.hash("admin123", 10);
+        adminUser = await User.create({
+          name: "System Admin",
+          email: "admin@resumeai.com",
+          password: hashedPassword,
+          role: "admin",
+          isVerified: true,
+          status: "active"
+        });
+      }
+    } else if (adminUser && adminUser.role === "admin" && adminUser.password) {
+      const isMatch = await bcrypt.compare(password, adminUser.password);
+      if (isMatch) {
+        isAdminValid = true;
       }
     }
 
-    if (!isAdminValid) {
+    if (!isAdminValid || !adminUser) {
       throw new AppError("Invalid admin email or password.", 401);
     }
+
+    const adminUserObj = {
+      id: adminUser._id,
+      name: adminUser.name,
+      email: adminUser.email,
+      role: adminUser.role
+    };
 
     // 2. Fetch configured Admin phone number
     const config = await SystemConfig.findOne({ key: "global_settings" });
@@ -272,11 +285,12 @@ router.post("/admin-request-otp", async (req, res, next) => {
     const is2FAActive = config?.admin2FAEnabled !== false;
 
     if (!is2FAActive) {
-      const token = "admin-session-token";
+      const token = generateAccessToken(adminUser._id, adminUser.role);
       return res.json({
         success: true,
         requiresOtp: false,
         token,
+        accessToken: token,
         user: adminUserObj
       });
     }
@@ -285,7 +299,7 @@ router.post("/admin-request-otp", async (req, res, next) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 Minutes
 
-    adminOtpStore.set(cleanEmail, { otp, expiresAt, adminUserObj });
+    adminOtpStore.set(cleanEmail, { otp, expiresAt, adminUserObj, userId: adminUser._id });
 
     // Print OTP clearly in terminal console only (NOT on webpage UI)
     console.log(`\n========================================================`);
@@ -295,9 +309,13 @@ router.post("/admin-request-otp", async (req, res, next) => {
     console.log(`💡 Master Fallback OTP: [ 180206 ]`);
     console.log(`========================================================\n`);
 
-    // Send real SMS OTP via SMS Gateway Utility
-    const { sendSmsOtp } = require("../utils/smsUtils");
-    await sendSmsOtp(targetPhone, otp);
+    // Send real SMS OTP via SMS Gateway Utility (wrapped to gracefully catch gateway errors)
+    try {
+      const { sendSmsOtp } = require("../utils/smsUtils");
+      await sendSmsOtp(targetPhone, otp);
+    } catch (smsErr) {
+      console.warn("⚠️ SMS Gateway Notice (OTP logged to server terminal):", smsErr.message);
+    }
 
     const maskedPhone = `+91 ${targetPhone.slice(0, 4)}****${targetPhone.slice(-2)}`;
 
@@ -338,12 +356,26 @@ router.post("/admin-verify-otp", async (req, res, next) => {
 
     // OTP verified successfully!
     if (stored) adminOtpStore.delete(cleanEmail);
-    const token = "admin-session-token";
-    const userObj = stored?.adminUserObj || {
-      id: "admin-id",
-      name: "System Admin",
-      email: cleanEmail,
-      role: "admin",
+
+    let adminUser = await User.findOne({ email: cleanEmail });
+    if (!adminUser) {
+      const hashedPassword = await bcrypt.hash("admin123", 10);
+      adminUser = await User.create({
+        name: "System Admin",
+        email: cleanEmail,
+        password: hashedPassword,
+        role: "admin",
+        isVerified: true,
+        status: "active"
+      });
+    }
+
+    const token = generateAccessToken(adminUser._id, adminUser.role);
+    const userObj = {
+      id: adminUser._id,
+      name: adminUser.name,
+      email: adminUser.email,
+      role: adminUser.role,
     };
 
     res.json({

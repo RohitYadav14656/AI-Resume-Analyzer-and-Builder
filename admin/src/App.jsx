@@ -208,11 +208,20 @@ export default function App() {
     fetchData();
   }, [token]);
 
+  useEffect(() => {
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete axios.defaults.headers.common["Authorization"];
+    }
+  }, [token]);
+
   const handleLoginSuccess = (newToken, user) => {
     setToken(newToken);
     setAdminUser(user);
     localStorage.setItem("adminToken", newToken);
     localStorage.setItem("adminUser", JSON.stringify(user));
+    axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
     toast.success(`Welcome back, ${user.name || "Admin"}! Authenticated successfully.`, { id: "admin-login-success" });
   };
 
@@ -221,6 +230,7 @@ export default function App() {
     setAdminUser(null);
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
+    delete axios.defaults.headers.common["Authorization"];
     toast("Logged out of Admin Portal", { icon: "🔒", id: "admin-logout" });
   };
 
