@@ -28,6 +28,16 @@ router.post("/", auth, upload.single("resume"), async (req, res, next) => {
   const tempFilePath = req.file ? req.file.path : null;
 
   try {
+    const User = require("../models/User");
+    const SystemConfig = require("../models/SystemConfig");
+    const config = await SystemConfig.findOne({ key: "global_settings" });
+    const requiredCredits = config?.creditCostAnalyze !== undefined ? config.creditCostAnalyze : 1;
+
+    const currentUser = await User.findById(req.user.userId);
+    if (currentUser && currentUser.aiCredits < requiredCredits && currentUser.role !== "admin") {
+      return next(new AppError(`Insufficient AI Credits! This analysis costs ${requiredCredits} credit(s). You have ${currentUser.aiCredits} credit(s).`, 403));
+    }
+
     if (!req.file) {
       return next(new AppError("No resume file uploaded. Please attach a PDF, DOCX, or TXT file.", 400));
     }
@@ -70,7 +80,13 @@ router.post("/", auth, upload.single("resume"), async (req, res, next) => {
       analysis = { rawResponse: cleaned };
     }
 
-    res.json({ success: true, analysis });
+    if (currentUser && currentUser.role !== "admin") {
+      currentUser.aiCredits = Math.max(0, (currentUser.aiCredits || 100) - requiredCredits);
+      currentUser.aiUsageCount = (currentUser.aiUsageCount || 0) + 1;
+      await currentUser.save();
+    }
+
+    res.json({ success: true, analysis, remainingCredits: currentUser ? currentUser.aiCredits : undefined });
 
     // Parse key information and save to DB in the background
     parseAndSaveResume(resumeText, req.user?.userId).catch((err) => {

@@ -82,7 +82,7 @@ function UploadIcon({ width, height }) {
           stroke-linejoin: round;
         }
         .upload-base {
-          stroke: #4b5563;
+          stroke: var(--primary, #2e2520);
           stroke-width: 3;
           stroke-linecap: round;
         }
@@ -181,7 +181,7 @@ function SpinnerIcon({ width, height }) {
         }
       `}</style>
       <g>
-        <circle cx="19" cy="19" r="16" stroke="#e2e8f0" strokeWidth="3" strokeOpacity="0.1" fill="none" />
+        <circle cx="19" cy="19" r="16" stroke="var(--border, #e7e5e4)" strokeWidth="3" strokeOpacity="0.2" fill="none" />
         <circle
           className="spinner-inner"
           cx="19"

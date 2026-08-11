@@ -1,168 +1,262 @@
 import React, { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Float } from "@react-three/drei";
+import { OrbitControls, Float, RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 
-// Individual Orbiting Shape - using lightweight meshStandardMaterial
-function OrbitingShape({ geometry, color, speed, radius, scale, positionY = 0 }) {
-  const meshRef = useRef();
-
-  useFrame((state) => {
-    const time = state.clock.getElapsedTime() * speed;
-    if (meshRef.current) {
-      meshRef.current.position.x = Math.cos(time) * radius;
-      meshRef.current.position.z = Math.sin(time) * radius;
-      meshRef.current.position.y = positionY + Math.sin(time * 2) * 0.5;
-      meshRef.current.rotation.x += 0.01;
-      meshRef.current.rotation.y += 0.02;
-    }
-  });
-
+// Glowing Background Aura Mesh
+function AuraGlow() {
   return (
-    <mesh ref={meshRef} scale={scale}>
-      {geometry}
-      <meshStandardMaterial
-        color={color}
-        roughness={0.2}
-        metalness={0.6}
+    <mesh position={[0, 0, -1.2]}>
+      <planeGeometry args={[7, 7]} />
+      <meshBasicMaterial
+        color="#e2e8f0"
         transparent
-        opacity={0.9}
+        opacity={0.15}
+        depthWrite={false}
       />
     </mesh>
   );
 }
 
-// Interactive Floating Resume Document - optimized material and segments
-function ResumeDocument() {
-  const meshRef = useRef();
-  
+// Interactive 3D Resume Document Card
+function ResumeDocumentCard({ pointer }) {
+  const groupRef = useRef();
+
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.getElapsedTime() * 0.5) * 0.18;
-      meshRef.current.rotation.x = Math.cos(state.clock.getElapsedTime() * 0.5) * 0.08;
+    if (groupRef.current) {
+      // Smooth subtle floating & mouse hover tilt
+      const t = state.clock.getElapsedTime();
+      const targetRotY = Math.sin(t * 0.6) * 0.1 + (pointer?.x || 0) * 0.12;
+      const targetRotX = Math.cos(t * 0.5) * 0.05 - (pointer?.y || 0) * 0.1;
+
+      groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotY, 0.06);
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetRotX, 0.06);
+      groupRef.current.position.y = -0.35 + Math.sin(t * 1.0) * 0.1;
     }
   });
 
   return (
-    <Float speed={1.5} rotationIntensity={0.4} floatIntensity={0.8}>
-      <group ref={meshRef}>
-        {/* Document Board */}
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[3, 4.2, 0.1]} />
-          <meshStandardMaterial
-            color="#ffffff"
-            roughness={0.2}
-            metalness={0.05}
-            transparent
-            opacity={0.92}
-          />
-        </mesh>
+    <group ref={groupRef} position={[0, -0.35, 0]}>
+      {/* Main Resume Sheet */}
+      <RoundedBox args={[2.8, 3.8, 0.1]} radius={0.12} smoothness={2}>
+        <meshStandardMaterial
+          color="#ffffff"
+          roughness={0.2}
+          metalness={0.05}
+        />
+      </RoundedBox>
 
-        {/* Profile Header Block */}
-        <mesh position={[-0.8, 1.4, 0.06]}>
-          <planeGeometry args={[1, 0.2]} />
-          <meshBasicMaterial color="#d97706" transparent opacity={0.9} />
-        </mesh>
-        
-        {/* Profile Pic Placeholder */}
-        <mesh position={[0.9, 1.4, 0.06]}>
-          <planeGeometry args={[0.5, 0.5]} />
-          <meshBasicMaterial color="#e7e5e4" />
-        </mesh>
+      {/* Header Accent Bar */}
+      <RoundedBox args={[1.1, 0.18, 0.04]} radius={0.04} position={[-0.55, 1.35, 0.07]}>
+        <meshStandardMaterial color="#d97706" roughness={0.2} metalness={0.3} />
+      </RoundedBox>
 
-        {/* Text lines details */}
-        <mesh position={[-0.7, 1.0, 0.06]}>
-          <planeGeometry args={[1.2, 0.1]} />
-          <meshBasicMaterial color="#2e2520" />
-        </mesh>
+      {/* Avatar Circle */}
+      <mesh position={[0.8, 1.35, 0.07]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.26, 0.26, 0.04, 20]} />
+        <meshStandardMaterial color="#f59e0b" roughness={0.2} metalness={0.4} />
+      </mesh>
 
-        <mesh position={[-0.9, 0.8, 0.06]}>
-          <planeGeometry args={[0.8, 0.05]} />
-          <meshBasicMaterial color="#78716c" />
-        </mesh>
+      {/* Header Text Line Details */}
+      <RoundedBox args={[0.9, 0.08, 0.03]} radius={0.02} position={[-0.65, 1.12, 0.07]}>
+        <meshStandardMaterial color="#2e2520" />
+      </RoundedBox>
 
-        {/* Section 1 */}
-        <mesh position={[-1.0, 0.4, 0.06]}>
-          <planeGeometry args={[0.6, 0.08]} />
-          <meshBasicMaterial color="#d97706" />
-        </mesh>
-        <mesh position={[0, 0.2, 0.06]}>
-          <planeGeometry args={[2.6, 0.04]} />
-          <meshBasicMaterial color="#e7e5e4" />
-        </mesh>
-        <mesh position={[0, 0.05, 0.06]}>
-          <planeGeometry args={[2.6, 0.04]} />
-          <meshBasicMaterial color="#e7e5e4" />
-        </mesh>
+      <RoundedBox args={[0.65, 0.06, 0.03]} radius={0.02} position={[-0.78, 0.96, 0.07]}>
+        <meshStandardMaterial color="#78716c" />
+      </RoundedBox>
 
-        {/* Section 2 */}
-        <mesh position={[-1.0, -0.3, 0.06]}>
-          <planeGeometry args={[0.6, 0.08]} />
-          <meshBasicMaterial color="#d97706" />
+      {/* Divider */}
+      <RoundedBox args={[2.3, 0.03, 0.02]} radius={0.01} position={[0, 0.78, 0.07]}>
+        <meshStandardMaterial color="#e7e5e4" />
+      </RoundedBox>
+
+      {/* ATS Pass Score Badge on 3D Document */}
+      <group position={[0.6, 0.5, 0.1]}>
+        <RoundedBox args={[1.0, 0.32, 0.06]} radius={0.08} smoothness={2}>
+          <meshStandardMaterial color="#d97706" roughness={0.2} metalness={0.4} />
+        </RoundedBox>
+        {/* White Check Circle inside ATS Badge */}
+        <mesh position={[-0.3, 0, 0.04]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.09, 0.09, 0.02, 16]} />
+          <meshBasicMaterial color="#ffffff" />
         </mesh>
-        <mesh position={[0, -0.5, 0.06]}>
-          <planeGeometry args={[2.6, 0.04]} />
-          <meshBasicMaterial color="#e7e5e4" />
-        </mesh>
-        <mesh position={[0, -0.65, 0.06]}>
-          <planeGeometry args={[2.6, 0.04]} />
-          <meshBasicMaterial color="#e7e5e4" />
-        </mesh>
-        <mesh position={[0, -0.8, 0.06]}>
-          <planeGeometry args={[1.8, 0.04]} />
-          <meshBasicMaterial color="#e7e5e4" />
-        </mesh>
+        <RoundedBox args={[0.36, 0.07, 0.02]} radius={0.02} position={[0.1, 0, 0.04]}>
+          <meshBasicMaterial color="#ffffff" />
+        </RoundedBox>
       </group>
-    </Float>
+
+      {/* Experience Section Headline */}
+      <RoundedBox args={[0.75, 0.08, 0.03]} radius={0.02} position={[-0.75, 0.5, 0.07]}>
+        <meshStandardMaterial color="#d97706" />
+      </RoundedBox>
+
+      {/* Bullet Paragraph Lines */}
+      <RoundedBox args={[2.3, 0.05, 0.02]} radius={0.01} position={[0, 0.28, 0.07]}>
+        <meshStandardMaterial color="#a8a29e" />
+      </RoundedBox>
+      <RoundedBox args={[2.3, 0.05, 0.02]} radius={0.01} position={[0, 0.14, 0.07]}>
+        <meshStandardMaterial color="#e7e5e4" />
+      </RoundedBox>
+      <RoundedBox args={[1.6, 0.05, 0.02]} radius={0.01} position={[-0.35, 0.0, 0.07]}>
+        <meshStandardMaterial color="#e7e5e4" />
+      </RoundedBox>
+
+      {/* Skills Section Headline */}
+      <RoundedBox args={[0.75, 0.08, 0.03]} radius={0.02} position={[-0.75, -0.24, 0.07]}>
+        <meshStandardMaterial color="#d97706" />
+      </RoundedBox>
+
+      {/* Skill Pills Row */}
+      <group position={[0, -0.48, 0.08]}>
+        <RoundedBox args={[0.65, 0.17, 0.04]} radius={0.04} position={[-0.8, 0, 0]}>
+          <meshStandardMaterial color="#fef3c7" roughness={0.3} />
+        </RoundedBox>
+        <RoundedBox args={[0.65, 0.17, 0.04]} radius={0.04} position={[-0.05, 0, 0]}>
+          <meshStandardMaterial color="#ffedd5" roughness={0.3} />
+        </RoundedBox>
+        <RoundedBox args={[0.65, 0.17, 0.04]} radius={0.04} position={[0.7, 0, 0]}>
+          <meshStandardMaterial color="#f5f0eb" roughness={0.3} />
+        </RoundedBox>
+      </group>
+
+      {/* Lower Detail Lines */}
+      <RoundedBox args={[2.3, 0.05, 0.02]} radius={0.01} position={[0, -0.78, 0.07]}>
+        <meshStandardMaterial color="#e7e5e4" />
+      </RoundedBox>
+      <RoundedBox args={[1.9, 0.05, 0.02]} radius={0.01} position={[-0.2, -0.92, 0.07]}>
+        <meshStandardMaterial color="#e7e5e4" />
+      </RoundedBox>
+      <RoundedBox args={[1.4, 0.05, 0.02]} radius={0.01} position={[-0.45, -1.06, 0.07]}>
+        <meshStandardMaterial color="#e7e5e4" />
+      </RoundedBox>
+    </group>
   );
 }
 
-// Background Particle System forming "AI" / Neural Network (Optimized count: 160)
+// Floating AI Tech Gem (3D Rhombus floating directly over the document page)
+function FloatingGem() {
+  const meshRef = useRef();
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      const t = state.clock.getElapsedTime();
+      // Sweeps over the top half of the paged document animation (x from -1.3 to +1.3)
+      meshRef.current.position.x = Math.sin(t * 0.7) * 1.3;
+      meshRef.current.position.y = 0.75 + Math.cos(t * 0.5) * 0.35;
+      meshRef.current.position.z = 0.95 + Math.sin(t * 0.8) * 0.25;
+
+      meshRef.current.rotation.x += 0.015;
+      meshRef.current.rotation.y += 0.02;
+      meshRef.current.rotation.z += 0.01;
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} position={[0, 0.75, 0.95]} scale={0.42}>
+      <octahedronGeometry args={[1]} />
+      <meshStandardMaterial color="#f59e0b" roughness={0.15} metalness={0.75} />
+    </mesh>
+  );
+}
+
+// Floating 3D ATS Shield Card (Floating over middle section of document)
+function FloatingATSBadge() {
+  const badgeRef = useRef();
+
+  useFrame((state) => {
+    if (badgeRef.current) {
+      const t = state.clock.getElapsedTime();
+      // Sweeps over the right-middle area of the paged document animation
+      badgeRef.current.position.x = 0.85 + Math.sin(t * 0.5) * 0.55;
+      badgeRef.current.position.y = -0.25 + Math.cos(t * 0.7) * 0.35;
+      badgeRef.current.position.z = 0.85 + Math.sin(t * 0.6) * 0.2;
+
+      badgeRef.current.rotation.z = Math.sin(t * 0.4) * 0.1;
+      badgeRef.current.rotation.y = Math.cos(t * 0.5) * 0.15;
+    }
+  });
+
+  return (
+    <group ref={badgeRef} position={[0.85, -0.25, 0.85]} scale={0.62}>
+      <RoundedBox args={[1.2, 0.7, 0.1]} radius={0.08} smoothness={2}>
+        <meshStandardMaterial color="#10b981" roughness={0.2} metalness={0.4} />
+      </RoundedBox>
+      {/* Outer Ring Accent */}
+      <mesh position={[0, 0, 0]}>
+        <torusGeometry args={[0.48, 0.04, 12, 20]} />
+        <meshStandardMaterial color="#34d399" roughness={0.2} metalness={0.6} />
+      </mesh>
+    </group>
+  );
+}
+
+// Floating 3D AI Target Ring (Floating directly over the lower half of document page)
+function FloatingTargetRing() {
+  const ringRef = useRef();
+
+  useFrame((state) => {
+    if (ringRef.current) {
+      const t = state.clock.getElapsedTime();
+      // Sweeps over the lower half of the paged document animation (x from +1.35 to -1.35)
+      ringRef.current.position.x = Math.cos(t * 0.6) * 1.35;
+      ringRef.current.position.y = -1.25 + Math.sin(t * 0.6) * 0.4;
+      ringRef.current.position.z = 1.05 + Math.cos(t * 0.7) * 0.2;
+
+      ringRef.current.rotation.x = Math.sin(t * 0.8) * 0.5;
+      ringRef.current.rotation.y += 0.02;
+      ringRef.current.rotation.z += 0.01;
+    }
+  });
+
+  return (
+    <mesh ref={ringRef} position={[0, -1.25, 1.05]} scale={0.45}>
+      <torusGeometry args={[0.8, 0.1, 12, 20]} />
+      <meshStandardMaterial color="#d97706" roughness={0.25} metalness={0.6} />
+    </mesh>
+  );
+}
+
+// Lightweight AI Background Floating Dust Particles (Ultra performance optimized)
 function AIParticles() {
   const pointsRef = useRef();
 
   const [positions] = useMemo(() => {
-    const count = 160;
-    const positions = new Float32Array(count * 3);
+    const count = 25;
+    const pos = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i++) {
-      const u = Math.random();
-      const v = Math.random();
-      const theta = u * 2.0 * Math.PI;
-      const phi = Math.acos(2.0 * v - 1.0);
-      const r = 5.5 + Math.random() * 7;
+      const r = 1.0 + Math.random() * 1.6;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
 
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = r * Math.cos(phi);
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = (r * Math.cos(phi)) * 0.5;
     }
 
-    return [positions];
+    return [pos];
   }, []);
 
   useFrame((state) => {
     if (pointsRef.current) {
-      pointsRef.current.rotation.y = state.clock.getElapsedTime() * 0.05;
-      pointsRef.current.rotation.x = Math.sin(state.clock.getElapsedTime() * 0.03) * 0.06;
+      const t = state.clock.getElapsedTime();
+      pointsRef.current.rotation.y = Math.sin(t * 0.1) * 0.04;
     }
   });
 
   return (
     <points ref={pointsRef}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
       <pointsMaterial
-        color="#f59e0b"
-        size={0.08}
+        color="#d97706"
+        size={0.04}
         sizeAttenuation
         transparent
-        opacity={0.45}
+        opacity={0.35}
         depthWrite={false}
-        blending={THREE.AdditiveBlending}
       />
     </points>
   );
@@ -171,8 +265,8 @@ function AIParticles() {
 export default function ResumeScene3D() {
   const containerRef = useRef(null);
   const [isVisible, setIsVisible] = useState(true);
+  const [pointer, setPointer] = useState({ x: 0, y: 0 });
 
-  // Pause render loop when canvas is scrolled out of viewport
   useEffect(() => {
     const el = containerRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
@@ -188,50 +282,63 @@ export default function ResumeScene3D() {
     return () => observer.disconnect();
   }, []);
 
+  const handlePointerMove = (e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+    setPointer({ x, y });
+  };
+
   return (
-    <div ref={containerRef} style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div
+      ref={containerRef}
+      onPointerMove={handlePointerMove}
+      className="resume-scene-3d-wrapper"
+      style={{
+        width: "100%",
+        height: "100%",
+        minHeight: "500px",
+        position: "relative",
+        overflow: "hidden",
+        borderRadius: "24px",
+        background: "rgba(255, 255, 255, 0.45)",
+        border: "1px solid rgba(226, 232, 240, 0.8)",
+        boxShadow: "0 10px 30px -10px rgba(15, 23, 42, 0.04)",
+        backdropFilter: "blur(6px)",
+        padding: "1rem",
+        boxSizing: "border-box",
+        touchAction: "none"
+      }}
+    >
       <Canvas
-        camera={{ position: [0, 0, 7.5], fov: 45 }}
-        dpr={Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.5)}
+        camera={{ position: [0, 0, 5.2], fov: 45 }}
+        dpr={[1, 1.5]}
         frameloop={isVisible ? "always" : "never"}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        style={{ width: "100%", height: "520px", display: "block" }}
       >
-        <ambientLight intensity={0.8} />
-        <directionalLight position={[10, 10, 5]} intensity={1.3} />
-        <pointLight position={[-10, -10, -5]} intensity={0.4} />
-        <pointLight position={[0, 5, 5]} intensity={0.9} color="#f59e0b" />
+        <ambientLight intensity={1.1} />
+        <directionalLight position={[6, 8, 5]} intensity={1.8} color="#ffffff" />
+        <directionalLight position={[-6, -6, -2]} intensity={0.6} color="#e2e8f0" />
+        <pointLight position={[0, 2, 4]} intensity={2.0} color="#cbd5e1" />
 
-        <ResumeDocument />
+        <AuraGlow />
+        <ResumeDocumentCard pointer={pointer} />
 
-        {/* Orbiting shapes around the resume */}
-        <OrbitingShape
-          geometry={<torusGeometry args={[0.5, 0.12, 16, 32]} />}
-          color="#f59e0b"
-          speed={0.7}
-          radius={3.8}
-          scale={0.8}
-          positionY={1.5}
-        />
-        <OrbitingShape
-          geometry={<octahedronGeometry args={[0.6]} />}
-          color="#fbbf24"
-          speed={-0.5}
-          radius={4.2}
-          scale={0.7}
-          positionY={-1}
-        />
-        <OrbitingShape
-          geometry={<icosahedronGeometry args={[0.5]} />}
-          color="#d97706"
-          speed={0.4}
-          radius={3.5}
-          scale={0.8}
-          positionY={0.5}
-        />
+        <FloatingGem />
+        <FloatingATSBadge />
+        <FloatingTargetRing />
 
         <AIParticles />
 
-        <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
+        <OrbitControls
+          enableZoom={false}
+          enablePan={false}
+          maxPolarAngle={Math.PI / 2 + 0.15}
+          minPolarAngle={Math.PI / 2 - 0.25}
+          rotateSpeed={0.5}
+        />
       </Canvas>
     </div>
   );

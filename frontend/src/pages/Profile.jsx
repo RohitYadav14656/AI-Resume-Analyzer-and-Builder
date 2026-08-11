@@ -41,13 +41,25 @@ import api, {
   exportUserData,
   deleteUserAccount,
   logUserActivity,
+  fetchPricingConfig,
+  upgradeUserSubscription,
 } from "../api";
 
-export default function Profile({ user, setUser, navigate, setForm, handleLogout }) {
+export default function Profile({ user, setUser, navigate, setForm, handleLogout, onOpenSupport, onOpenBuyCredits }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success"); // "success" | "error"
+
+  const [pricingConfig, setPricingConfig] = useState({
+    normalPlanPrice: 0,
+    proPlanPrice: 499,
+    enterprisePlanPrice: 1999,
+    pricePerCreditInr: 2,
+    dailyBonusCredits: 4,
+    initialSignupCredits: 10,
+  });
+  const [upgradingPlan, setUpgradingPlan] = useState(false);
 
   // User profile state
   const [profile, setProfile] = useState({
@@ -129,8 +141,16 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
     async function loadData() {
       try {
         setLoading(true);
-        const data = await fetchUserProfile();
-        if (isMounted && data.success) {
+        const [data, pricingRes] = await Promise.all([
+          fetchUserProfile().catch(() => null),
+          fetchPricingConfig().catch(() => null),
+        ]);
+
+        if (isMounted && pricingRes?.success && pricingRes?.pricing) {
+          setPricingConfig(pricingRes.pricing);
+        }
+
+        if (isMounted && data?.success) {
           setProfile(data.profile);
           setStats(data.stats);
           setProfileCompletion(data.profileCompletion);
@@ -144,6 +164,23 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
             github: data.profile.github || "",
             avatar: data.profile.avatar || "",
           });
+
+          // Sync top-level user object in App state & localStorage for Navbar display
+          if (setUser && data.profile) {
+            setUser((prev) => {
+              const updatedUser = {
+                ...prev,
+                name: data.profile.name || prev?.name,
+                email: data.profile.email || prev?.email,
+                aiCredits: data.profile.aiCredits,
+                subscription: data.profile.subscription,
+                role: data.profile.role,
+                status: data.profile.status,
+              };
+              localStorage.setItem("user", JSON.stringify(updatedUser));
+              return updatedUser;
+            });
+          }
         }
       } catch (err) {
         // Fallback to local default state if API is offline or initial mount
@@ -172,7 +209,37 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, []);
+
+  const handlePlanUpgrade = async (planName) => {
+    try {
+      setUpgradingPlan(true);
+      const res = await upgradeUserSubscription(planName);
+      if (res?.success) {
+        setProfile((prev) => ({
+          ...prev,
+          subscription: res.subscription,
+          aiCredits: res.aiCredits,
+        }));
+        if (setUser) {
+          setUser((prev) => {
+            const updated = {
+              ...prev,
+              subscription: res.subscription,
+              aiCredits: res.aiCredits,
+            };
+            localStorage.setItem("user", JSON.stringify(updated));
+            return updated;
+          });
+        }
+        showToast(res.message || `Successfully switched to ${planName.toUpperCase()} plan!`);
+      }
+    } catch (err) {
+      showToast(err.response?.data?.error || "Failed to change subscription plan.", "error");
+    } finally {
+      setUpgradingPlan(false);
+    }
+  };
 
   // Toggle AI Personalization
   const handleToggleAIPersonalization = async () => {
@@ -525,8 +592,12 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
               </h1>
               <span
                 style={{
-                  background: "rgba(16, 185, 129, 0.12)",
-                  color: "#059669",
+                  background: profile.isOnline || (profile.lastActiveAt && Date.now() - new Date(profile.lastActiveAt).getTime() < 5 * 60 * 1000)
+                    ? "rgba(16, 185, 129, 0.12)"
+                    : "rgba(156, 163, 175, 0.12)",
+                  color: profile.isOnline || (profile.lastActiveAt && Date.now() - new Date(profile.lastActiveAt).getTime() < 5 * 60 * 1000)
+                    ? "#059669"
+                    : "#6b7280",
                   padding: "0.2rem 0.65rem",
                   borderRadius: "20px",
                   fontSize: "0.78rem",
@@ -536,8 +607,61 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                   gap: "0.3rem",
                 }}
               >
-                <Check size={13} /> Verified Account
+                {profile.isOnline || (profile.lastActiveAt && Date.now() - new Date(profile.lastActiveAt).getTime() < 5 * 60 * 1000)
+                  ? "🟢 Online Now"
+                  : "⚪ Offline"}
               </span>
+              <span
+                style={{
+                  background: "rgba(217, 119, 6, 0.12)",
+                  color: "var(--accent)",
+                  padding: "0.2rem 0.65rem",
+                  borderRadius: "20px",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  textTransform: "uppercase"
+                }}
+              >
+                ✨ {profile.subscription || user?.subscription || "Free"} Plan
+              </span>
+              <span
+                style={{
+                  background: "rgba(59, 130, 246, 0.12)",
+                  color: "#2563eb",
+                  padding: "0.2rem 0.65rem",
+                  borderRadius: "20px",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                }}
+              >
+                ⚡ {profile.aiCredits !== undefined ? profile.aiCredits : (user?.aiCredits ?? 100)} AI Credits
+              </span>
+              {onOpenBuyCredits && (
+                <button
+                  onClick={onOpenBuyCredits}
+                  style={{
+                    background: "var(--accent)",
+                    color: "#ffffff",
+                    padding: "0.2rem 0.65rem",
+                    borderRadius: "20px",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    border: "none",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.3rem"
+                  }}
+                >
+                  ➕ Buy Credits
+                </button>
+              )}
             </div>
 
             <p style={{ fontSize: "1rem", fontWeight: 600, color: "var(--accent)", marginBottom: "0.4rem" }}>
@@ -587,8 +711,14 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                   💻 + Add GitHub
                 </span>
               )}
-              <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                🗓️ Joined {formatDate(profile.createdAt)}
+              <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }} title={`Signed up on ${formatDate(profile.createdAt)}`}>
+                ✍️ Joined {formatDate(profile.createdAt)}
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }} title={`First login: ${formatDate(profile.firstLogin || profile.createdAt)}`}>
+                🔑 First Login: {formatDate(profile.firstLogin || profile.createdAt)}
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }} title={`Last login: ${formatDate(profile.lastLogin || profile.createdAt)}`}>
+                🕒 Last Active: {formatTimeAgo(profile.lastLogin || profile.createdAt)}
               </span>
             </div>
           </div>
@@ -611,6 +741,27 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
             >
               <Edit3 size={16} /> Edit Profile
             </button>
+
+            {onOpenSupport && (
+              <button
+                onClick={onOpenSupport}
+                style={{
+                  padding: "0.65rem 1.35rem",
+                  borderRadius: "var(--radius)",
+                  fontSize: "0.9rem",
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  background: "var(--surface-2)",
+                  color: "var(--primary)",
+                  border: "1px solid var(--border)",
+                  cursor: "pointer"
+                }}
+              >
+                🎫 Support & Tickets
+              </button>
+            )}
           </div>
         </div>
 
@@ -763,6 +914,189 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
               <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Exported PDF documents</div>
             </div>
           </motion.div>
+        </div>
+      </div>
+
+      {/* ── MEMBERSHIP PLANS & TOKEN TOP-UP SECTION ── */}
+      <div style={{ marginBottom: "2.5rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "1rem" }}>
+          <div>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              💳 Membership Plans & Token Purchase
+            </h2>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "2px" }}>
+              Choose your membership tier or top up AI tokens when you run low. (Initial signup: {pricingConfig.initialSignupCredits} credits • Daily login bonus: {pricingConfig.dailyBonusCredits} credits)
+            </p>
+          </div>
+          {onOpenBuyCredits && (
+            <button
+              onClick={onOpenBuyCredits}
+              style={{
+                background: "linear-gradient(135deg, var(--accent) 0%, #f59e0b 100%)",
+                color: "#ffffff",
+                padding: "0.6rem 1.25rem",
+                borderRadius: "var(--radius)",
+                fontWeight: 700,
+                fontSize: "0.9rem",
+                border: "none",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                boxShadow: "0 4px 14px rgba(217, 119, 6, 0.3)",
+              }}
+            >
+              ⚡ Buy Additional Tokens (₹{pricingConfig.pricePerCreditInr}/credit)
+            </button>
+          )}
+        </div>
+
+        {/* Pricing Cards Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+          
+          {/* Plan 1: Normal User */}
+          <motion.div
+            whileHover={{ y: -6 }}
+            transition={{ duration: 0.2 }}
+            className="card glass-panel"
+            style={{
+              padding: "1.75rem",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              borderRadius: "16px",
+              border: (profile.subscription === "normal" || profile.subscription === "free" || !profile.subscription) ? "2px solid var(--accent)" : "1px solid var(--border)",
+              background: (profile.subscription === "normal" || profile.subscription === "free" || !profile.subscription) ? "rgba(217, 119, 6, 0.04)" : "#ffffff",
+              position: "relative"
+            }}
+          >
+            {(profile.subscription === "normal" || profile.subscription === "free" || !profile.subscription) && (
+              <span style={{ position: "absolute", top: "12px", right: "12px", background: "rgba(217, 119, 6, 0.15)", color: "var(--accent)", fontSize: "0.72rem", fontWeight: 800, padding: "0.2rem 0.6rem", borderRadius: "12px" }}>
+                Current Active Plan
+              </span>
+            )}
+            <div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--text-main)", marginBottom: "0.25rem" }}>Normal User</div>
+              <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "1rem" }}>Default tier for job seekers</div>
+              <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--text-main)", marginBottom: "1.25rem" }}>
+                ₹{pricingConfig.normalPlanPrice} <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 500 }}>/ forever</span>
+              </div>
+              <ul style={{ display: "flex", flexDirection: "column", gap: "0.6rem", fontSize: "0.85rem", color: "var(--text-main)", paddingLeft: 0, listStyle: "none", marginBottom: "1.5rem" }}>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#10b981" /> {pricingConfig.initialSignupCredits} Free Welcome Signup Credits</li>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#10b981" /> +{pricingConfig.dailyBonusCredits} Free Daily Login Credits</li>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#10b981" /> AI Resume Building & ATS Scans</li>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#10b981" /> Token Top-up whenever needed</li>
+              </ul>
+            </div>
+            <button
+              onClick={() => handlePlanUpgrade("normal")}
+              disabled={upgradingPlan || profile.subscription === "normal" || profile.subscription === "free" || !profile.subscription}
+              className="btn-secondary"
+              style={{ width: "100%", justifyContent: "center", fontWeight: 700 }}
+            >
+              {(profile.subscription === "normal" || profile.subscription === "free" || !profile.subscription) ? "Active Plan" : "Switch to Normal Plan"}
+            </button>
+          </motion.div>
+
+          {/* Plan 2: Pro User */}
+          <motion.div
+            whileHover={{ y: -6 }}
+            transition={{ duration: 0.2 }}
+            className="card glass-panel"
+            style={{
+              padding: "1.75rem",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              borderRadius: "16px",
+              border: profile.subscription === "pro" ? "2px solid #047857" : "2px solid rgba(16, 185, 129, 0.4)",
+              background: profile.subscription === "pro" ? "rgba(16, 185, 129, 0.05)" : "#ffffff",
+              position: "relative"
+            }}
+          >
+            <span style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #10b981, #059669)", color: "#ffffff", fontSize: "0.72rem", fontWeight: 800, padding: "0.25rem 0.8rem", borderRadius: "12px", boxShadow: "0 2px 8px rgba(16,185,129,0.3)" }}>
+              ⭐ POPULAR PRO TIER
+            </span>
+            <div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--text-main)", marginBottom: "0.25rem", marginTop: "0.5rem" }}>Pro User</div>
+              <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "1rem" }}>For active job applicants</div>
+              <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "#047857", marginBottom: "1.25rem" }}>
+                ₹{pricingConfig.proPlanPrice} <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 500 }}>/ month</span>
+              </div>
+              <ul style={{ display: "flex", flexDirection: "column", gap: "0.6rem", fontSize: "0.85rem", color: "var(--text-main)", paddingLeft: 0, listStyle: "none", marginBottom: "1.5rem" }}>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#047857" /> <strong>+100 Instant Bonus Credits</strong></li>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#047857" /> All Normal Plan features included</li>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#047857" /> Priority ATS AI Keyword Matching</li>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#047857" /> Premium Resume PDF Templates</li>
+              </ul>
+            </div>
+            <button
+              onClick={() => onOpenBuyCredits ? onOpenBuyCredits("pro") : handlePlanUpgrade("pro")}
+              disabled={upgradingPlan || profile.subscription === "pro"}
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                fontWeight: 800,
+                background: profile.subscription === "pro" ? "rgba(16, 185, 129, 0.2)" : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                color: profile.subscription === "pro" ? "#047857" : "#ffffff",
+                border: "none",
+                padding: "0.75rem",
+                borderRadius: "var(--radius)",
+                cursor: profile.subscription === "pro" ? "default" : "pointer"
+              }}
+            >
+              {profile.subscription === "pro" ? "Active Pro User" : `Become Pro User (₹${pricingConfig.proPlanPrice})`}
+            </button>
+          </motion.div>
+
+          {/* Plan 3: Enterprise User */}
+          <motion.div
+            whileHover={{ y: -6 }}
+            transition={{ duration: 0.2 }}
+            className="card glass-panel"
+            style={{
+              padding: "1.75rem",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              borderRadius: "16px",
+              border: profile.subscription === "enterprise" ? "2px solid #4f46e5" : "1px solid var(--border)",
+              background: profile.subscription === "enterprise" ? "rgba(79, 70, 229, 0.05)" : "#ffffff",
+              position: "relative"
+            }}
+          >
+            <div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--text-main)", marginBottom: "0.25rem" }}>Enterprise User</div>
+              <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "1rem" }}>Maximum power & team features</div>
+              <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "#4f46e5", marginBottom: "1.25rem" }}>
+                ₹{pricingConfig.enterprisePlanPrice} <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 500 }}>/ month</span>
+              </div>
+              <ul style={{ display: "flex", flexDirection: "column", gap: "0.6rem", fontSize: "0.85rem", color: "var(--text-main)", paddingLeft: 0, listStyle: "none", marginBottom: "1.5rem" }}>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#4f46e5" /> <strong>+500 Instant Bonus Credits</strong></li>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#4f46e5" /> All Pro & Normal Plan features</li>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#4f46e5" /> Unlimited ATS Audits & Generations</li>
+                <li style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><CheckCircle2 size={16} color="#4f46e5" /> 24/7 Priority Support & Admin Access</li>
+              </ul>
+            </div>
+            <button
+              onClick={() => onOpenBuyCredits ? onOpenBuyCredits("enterprise") : handlePlanUpgrade("enterprise")}
+              disabled={upgradingPlan || profile.subscription === "enterprise"}
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                fontWeight: 800,
+                background: profile.subscription === "enterprise" ? "rgba(79, 70, 229, 0.2)" : "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                color: profile.subscription === "enterprise" ? "#4f46e5" : "#ffffff",
+                border: "none",
+                padding: "0.75rem",
+                borderRadius: "var(--radius)",
+                cursor: profile.subscription === "enterprise" ? "default" : "pointer"
+              }}
+            >
+              {profile.subscription === "enterprise" ? "Active Enterprise User" : `Become Enterprise User (₹${pricingConfig.enterprisePlanPrice})`}
+            </button>
+          </motion.div>
+
         </div>
       </div>
 
@@ -1069,6 +1403,25 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                       <Award size={13} /> 88% ATS
                     </span>
                   </div>
+
+                  {resume.isFlagged && (
+                    <div style={{
+                      background: "#fff1f2",
+                      color: "#e11d48",
+                      border: "1px solid #fecdd3",
+                      borderRadius: "8px",
+                      padding: "0.5rem 0.75rem",
+                      fontSize: "0.78rem",
+                      fontWeight: 600,
+                      marginBottom: "0.75rem",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.4rem"
+                    }}>
+                      <span>⚠️</span>
+                      <span><strong>Flagged by Admin:</strong> {resume.flagReason || "Requires administrative review"}</span>
+                    </div>
+                  )}
 
                   <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", marginBottom: "1rem", lineHeight: "1.5" }}>
                     {resume.summary || "Professional student resume with education, skills, and project experience."}

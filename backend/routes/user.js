@@ -3,6 +3,9 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const Resume = require("../models/Resume");
 const RefreshToken = require("../models/RefreshToken");
+const Ticket = require("../models/Ticket");
+const Announcement = require("../models/Announcement");
+const SystemConfig = require("../models/SystemConfig");
 const auth = require("../middleware/auth");
 const AppError = require("../utils/AppError");
 
@@ -34,6 +37,27 @@ router.get("/profile", async (req, res, next) => {
   try {
     const user = await User.findById(req.user.userId).select("-password -resetPasswordToken -emailVerificationToken");
     if (!user) throw new AppError("User not found.", 404);
+
+    // Fetch global config for daily bonus
+    const config = await SystemConfig.findOne({ key: "global_settings" });
+    const dailyBonusAmount = config?.dailyBonusCredits !== undefined ? config.dailyBonusCredits : 4;
+
+    // Daily Free Login Bonus Check (+4 credits default every 24h/new day)
+    let dailyBonusAwarded = false;
+    const now = new Date();
+    const lastBonus = user.lastDailyCreditBonus ? new Date(user.lastDailyCreditBonus) : null;
+
+    if (!lastBonus || now.toDateString() !== lastBonus.toDateString()) {
+      user.aiCredits = (user.aiCredits !== undefined ? user.aiCredits : 10) + dailyBonusAmount;
+      user.lastDailyCreditBonus = now;
+      dailyBonusAwarded = true;
+      user.recentActivity.unshift({
+        action: "Daily Bonus Received",
+        description: `Received +${dailyBonusAmount} Free AI Daily Login Credits! 🎁`,
+        timestamp: now,
+      });
+      await user.save();
+    }
 
     const resumes = await Resume.find({ userId: req.user.userId }).sort({ updatedAt: -1 });
 
@@ -87,7 +111,15 @@ router.get("/profile", async (req, res, next) => {
           weeklySummary: false,
         },
         createdAt: user.createdAt,
+        firstLogin: user.firstLogin || user.createdAt,
+        lastLogin: user.lastLogin || user.createdAt,
+        isOnline: Boolean(user.isOnline || (user.lastActiveAt && (Date.now() - new Date(user.lastActiveAt).getTime()) < 5 * 60 * 1000)),
+        lastActiveAt: user.lastActiveAt || user.createdAt,
         isVerified: user.isVerified,
+        role: user.role || "user",
+        status: user.status || "active",
+        subscription: user.subscription || "free",
+        aiCredits: user.aiCredits !== undefined ? user.aiCredits : 100,
       },
       stats,
       profileCompletion: completion,
@@ -236,6 +268,8 @@ router.get("/export", async (req, res, next) => {
         aiPersonalization: user.aiPersonalization,
         notificationPreferences: user.notificationPreferences,
         createdAt: user.createdAt,
+        firstLogin: user.firstLogin || user.createdAt,
+        lastLogin: user.lastLogin || user.createdAt,
       },
       resumes,
       activityHistory: user.recentActivity,
@@ -259,6 +293,405 @@ router.delete("/account", async (req, res, next) => {
 
     res.clearCookie("refreshToken", { path: "/api/auth" });
     res.json({ success: true, message: "Account and associated data deleted permanently." });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/user/tickets
+ * Fetch tickets submitted by current user
+ */
+router.get("/tickets", async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) throw new AppError("User not found", 404);
+
+    const tickets = await Ticket.find({
+      $or: [{ userId: req.user.userId }, { userEmail: user.email }],
+    }).sort({ updatedAt: -1 });
+
+    res.json({ success: true, count: tickets.length, tickets });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/user/tickets
+ * Submit a new support ticket
+ */
+router.post("/tickets", async (req, res, next) => {
+  try {
+    const { title, description, type, priority } = req.body;
+    if (!title || !description) {
+      throw new AppError("Title and description are required for support ticket.", 400);
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) throw new AppError("User not found", 404);
+
+    const ticket = await Ticket.create({
+      userId: user._id,
+      userName: user.name || "User",
+      userEmail: user.email,
+      title,
+      description,
+      type: type || "support",
+      priority: priority || "medium",
+      status: "open",
+    });
+
+    res.json({
+      success: true,
+      message: "Support ticket created successfully.",
+      ticket,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/user/tickets/:id/reply
+ * Reply to ticket thread
+ */
+router.post("/tickets/:id/reply", async (req, res, next) => {
+  try {
+    const { message } = req.body;
+    if (!message) throw new AppError("Reply message is required.", 400);
+
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) throw new AppError("Ticket not found.", 404);
+
+    const user = await User.findById(req.user.userId);
+
+    ticket.replies.push({
+      senderName: user ? user.name : "User",
+      senderRole: "user",
+      message,
+      createdAt: new Date(),
+    });
+
+    if (ticket.status === "resolved") {
+      ticket.status = "open";
+    }
+
+    await ticket.save();
+
+    res.json({
+      success: true,
+      message: "Reply added to ticket.",
+      ticket,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/user/announcements
+ * Fetch active broadcast announcements for user
+ */
+router.get("/announcements", async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    const userSub = user?.subscription || "free";
+
+    const announcements = await Announcement.find({
+      active: true,
+      targetGroup: { $in: ["all", userSub] },
+    }).sort({ createdAt: -1 });
+
+    res.json({ success: true, count: announcements.length, announcements });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/user/create-payment-order
+ * Generate payment order for Razorpay / Stripe / Test Checkout
+ */
+router.post("/create-payment-order", async (req, res, next) => {
+  try {
+    const { creditsCount, plan } = req.body;
+    const SystemConfig = require("../models/SystemConfig");
+    const crypto = require("crypto");
+    const config = await SystemConfig.findOne({ key: "global_settings" });
+
+    const keyId = config?.razorpayKeyId || process.env.RAZORPAY_KEY_ID || "";
+    const keySecret = config?.razorpayKeySecret || process.env.RAZORPAY_KEY_SECRET || "";
+    const paymentGateway = config?.paymentGateway || "upi_qr";
+    const upiId = config?.upiId || "resumeai@fam";
+    const upiName = config?.upiName || "FamPay / Resume AI";
+
+    let totalAmountInr = 0;
+    let description = "";
+    let count = 0;
+
+    if (plan && ["pro", "enterprise"].includes(plan.toLowerCase())) {
+      const targetPlan = plan.toLowerCase();
+      totalAmountInr = targetPlan === "pro" 
+        ? (config?.proPlanPrice !== undefined ? config.proPlanPrice : 499)
+        : (config?.enterprisePlanPrice !== undefined ? config.enterprisePlanPrice : 1999);
+      description = `${targetPlan.toUpperCase()} Plan Subscription`;
+    } else {
+      count = parseInt(creditsCount);
+      if (isNaN(count) || count <= 0) {
+        throw new AppError("Invalid credits amount requested.", 400);
+      }
+      const pricePerCredit = config?.pricePerCreditInr !== undefined ? config.pricePerCreditInr : 2;
+      totalAmountInr = count * pricePerCredit;
+      description = `+${count} AI Credits Pack`;
+    }
+
+    const amountInPaisa = totalAmountInr * 100;
+    const orderId = `order_${crypto.randomBytes(12).toString("hex")}`;
+    const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${totalAmountInr}&cu=INR&tn=${encodeURIComponent(description)}`;
+
+    res.json({
+      success: true,
+      orderId,
+      amountInr: totalAmountInr,
+      amountInPaisa,
+      currency: "INR",
+      creditsCount: count,
+      plan: plan || null,
+      description,
+      keyId,
+      paymentGateway,
+      upiId,
+      upiName,
+      upiUri,
+      hasLiveKeys: Boolean(keyId && keySecret && paymentGateway === "razorpay"),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/user/verify-payment
+ * Verify payment & update user credits or subscription plan
+ */
+router.post("/verify-payment", async (req, res, next) => {
+  try {
+    const { orderId, paymentId, signature, creditsCount, plan, utrNumber } = req.body;
+    const crypto = require("crypto");
+    const SystemConfig = require("../models/SystemConfig");
+    const config = await SystemConfig.findOne({ key: "global_settings" });
+    const keySecret = config?.razorpayKeySecret || process.env.RAZORPAY_KEY_SECRET || "";
+
+    if (keySecret && signature) {
+      const generatedSignature = crypto
+        .createHmac("sha256", keySecret)
+        .update(`${orderId}|${paymentId}`)
+        .digest("hex");
+
+      if (generatedSignature !== signature) {
+        throw new AppError("Payment verification failed. Invalid HMAC signature.", 400);
+      }
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) throw new AppError("User not found.", 404);
+
+    const refTag = utrNumber ? ` (UTR: ${utrNumber})` : paymentId ? ` (Ref: ${paymentId})` : "";
+
+    if (plan && ["pro", "enterprise"].includes(plan.toLowerCase())) {
+      const targetPlan = plan.toLowerCase();
+      const planPrice = targetPlan === "pro" 
+        ? (config?.proPlanPrice !== undefined ? config.proPlanPrice : 499)
+        : (config?.enterprisePlanPrice !== undefined ? config.enterprisePlanPrice : 1999);
+
+      user.subscription = targetPlan;
+      const extraCredits = targetPlan === "pro" ? 100 : 500;
+      user.aiCredits = (user.aiCredits || 0) + extraCredits;
+
+      user.recentActivity.unshift({
+        action: "Subscription Payment Verified",
+        description: `Verified payment${refTag} for ${targetPlan.toUpperCase()} Plan (₹${planPrice}) — Received +${extraCredits} Bonus Credits!`,
+        timestamp: new Date(),
+      });
+
+      if (user.recentActivity.length > 25) {
+        user.recentActivity = user.recentActivity.slice(0, 25);
+      }
+
+      await user.save();
+
+      return res.json({
+        success: true,
+        message: `🎉 Payment Verified! Subscribed to ${targetPlan.toUpperCase()} Plan (₹${planPrice}) with +${extraCredits} Bonus Credits!`,
+        subscription: user.subscription,
+        aiCredits: user.aiCredits,
+        totalAmountInr: planPrice,
+      });
+    } else {
+      const count = parseInt(creditsCount);
+      if (isNaN(count) || count <= 0) {
+        throw new AppError("Invalid credits count.", 400);
+      }
+      const pricePerCredit = config?.pricePerCreditInr !== undefined ? config.pricePerCreditInr : 2;
+      const totalAmountInr = count * pricePerCredit;
+      user.aiCredits = (user.aiCredits || 0) + count;
+
+      user.recentActivity.unshift({
+        action: "Payment Verified & Credits Added",
+        description: `Verified payment${refTag} — Added +${count} AI Credits for ₹${totalAmountInr}`,
+        timestamp: new Date(),
+      });
+
+      if (user.recentActivity.length > 25) {
+        user.recentActivity = user.recentActivity.slice(0, 25);
+      }
+
+      await user.save();
+
+      return res.json({
+        success: true,
+        message: `🎉 Payment Verified! +${count} AI Credits added to your account.`,
+        subscription: user.subscription,
+        aiCredits: user.aiCredits,
+        totalAmountInr,
+      });
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/user/buy-credits
+ * Purchase AI credits directly (Fall-back / Direct credit grant)
+ */
+router.post("/buy-credits", async (req, res, next) => {
+  try {
+    const { creditsCount } = req.body;
+    const count = parseInt(creditsCount);
+
+    if (isNaN(count) || count <= 0) {
+      throw new AppError("Invalid credits amount requested.", 400);
+    }
+
+    const SystemConfig = require("../models/SystemConfig");
+    const config = await SystemConfig.findOne({ key: "global_settings" });
+    const pricePerCredit = config?.pricePerCreditInr !== undefined ? config.pricePerCreditInr : 2;
+
+    const totalAmountInr = count * pricePerCredit;
+
+    const user = await User.findById(req.user.userId);
+    if (!user) throw new AppError("User not found.", 404);
+
+    user.aiCredits = (user.aiCredits || 0) + count;
+
+    user.recentActivity.unshift({
+      action: "AI Credits Purchased",
+      description: `Purchased +${count} AI Credits for ₹${totalAmountInr} (₹${pricePerCredit}/credit)`,
+      timestamp: new Date(),
+    });
+
+    if (user.recentActivity.length > 25) {
+      user.recentActivity = user.recentActivity.slice(0, 25);
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: `Successfully purchased +${count} AI Credits for ₹${totalAmountInr}!`,
+      aiCredits: user.aiCredits,
+      totalAmountInr,
+      pricePerCreditInr: pricePerCredit,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/user/pricing-config
+ * Fetch current subscription plan prices & credit top-up rates
+ */
+router.get("/pricing-config", async (req, res, next) => {
+  try {
+    let config = await SystemConfig.findOne({ key: "global_settings" });
+    if (!config) {
+      config = await SystemConfig.create({ key: "global_settings" });
+    }
+
+    res.json({
+      success: true,
+      pricing: {
+        normalPlanPrice: config.normalPlanPrice !== undefined ? config.normalPlanPrice : 0,
+        proPlanPrice: config.proPlanPrice !== undefined ? config.proPlanPrice : 499,
+        enterprisePlanPrice: config.enterprisePlanPrice !== undefined ? config.enterprisePlanPrice : 1999,
+        pricePerCreditInr: config.pricePerCreditInr !== undefined ? config.pricePerCreditInr : 2,
+        dailyBonusCredits: config.dailyBonusCredits !== undefined ? config.dailyBonusCredits : 4,
+        initialSignupCredits: config.initialSignupCredits !== undefined ? config.initialSignupCredits : 10,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/user/upgrade-subscription
+ * Upgrade or change user subscription plan (normal, pro, enterprise)
+ */
+router.post("/upgrade-subscription", async (req, res, next) => {
+  try {
+    const { plan } = req.body;
+    const targetPlan = String(plan || "").toLowerCase().trim();
+
+    if (!["normal", "free", "pro", "enterprise"].includes(targetPlan)) {
+      throw new AppError("Invalid subscription plan selected. Must be 'normal', 'pro', or 'enterprise'.", 400);
+    }
+
+    const normalizedPlan = targetPlan === "free" ? "normal" : targetPlan;
+
+    const user = await User.findById(req.user.userId);
+    if (!user) throw new AppError("User not found.", 404);
+
+    const config = await SystemConfig.findOne({ key: "global_settings" });
+    const planPrice = normalizedPlan === "pro" 
+      ? (config?.proPlanPrice !== undefined ? config.proPlanPrice : 499)
+      : normalizedPlan === "enterprise"
+      ? (config?.enterprisePlanPrice !== undefined ? config.enterprisePlanPrice : 1999)
+      : (config?.normalPlanPrice !== undefined ? config.normalPlanPrice : 0);
+
+    user.subscription = normalizedPlan;
+
+    // Award bonus plan credits on upgrading to Pro (+100) or Enterprise (+500)
+    let extraCreditsAwarded = 0;
+    if (normalizedPlan === "pro") extraCreditsAwarded = 100;
+    if (normalizedPlan === "enterprise") extraCreditsAwarded = 500;
+
+    if (extraCreditsAwarded > 0) {
+      user.aiCredits = (user.aiCredits || 0) + extraCreditsAwarded;
+    }
+
+    user.recentActivity.unshift({
+      action: "Subscription Updated",
+      description: `Upgraded subscription to ${normalizedPlan.toUpperCase()} Plan (₹${planPrice})${extraCreditsAwarded ? ` — Received +${extraCreditsAwarded} Bonus Credits!` : ""}`,
+      timestamp: new Date(),
+    });
+
+    if (user.recentActivity.length > 25) {
+      user.recentActivity = user.recentActivity.slice(0, 25);
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: `Subscription successfully updated to ${normalizedPlan.toUpperCase()}!`,
+      subscription: user.subscription,
+      aiCredits: user.aiCredits,
+      planPrice,
+    });
   } catch (err) {
     next(err);
   }

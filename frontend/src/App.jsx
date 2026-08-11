@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import LottieIcon from "./components/LottieIcon";
 import { motion, AnimatePresence } from "framer-motion";
+import { Toaster, toast } from "react-hot-toast";
 import api, { setAccessToken, clearAccessToken, registerLogoutCallback } from "./api";
+import WebsiteLogo from "./components/WebsiteLogo";
+import { Sparkles, Cpu, Target, Gauge, CheckCircle2, Cloud, ArrowRight, ShieldCheck, Zap, Award, Star, Bell } from "lucide-react";
 
 // Lazy-loaded components for optimal initial bundle performance
 const ResumeBuilder = lazy(() => import("./pages/ResumeBuilder"));
@@ -11,6 +14,14 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Profile = lazy(() => import("./pages/Profile"));
 const ResumeScene3D = lazy(() => import("./components/ResumeScene3D"));
 const RiveCTA = lazy(() => import("./components/RiveCTA"));
+const NotificationCenterModal = lazy(() => import("./components/NotificationCenterModal"));
+const SupportTicketsModal = lazy(() => import("./components/SupportTicketsModal"));
+const BuyCreditsModal = lazy(() => import("./components/BuyCreditsModal"));
+
+import ImpersonationBanner from "./components/ImpersonationBanner";
+import MaintenanceScreen from "./components/MaintenanceScreen";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 // Lightweight Suspense fallback spinner
 const ViewLoader = () => (
@@ -62,6 +73,19 @@ export default function App() {
   const [resetToken, setResetToken] = useState(null);
   const [verifiedToast, setVerifiedToast] = useState(""); // "success" | "error" | ""
 
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [buyCreditsModalProps, setBuyCreditsModalProps] = useState({ isOpen: false, mode: "credits", plan: "pro" });
+  const [systemConfig, setSystemConfig] = useState({ maintenanceMode: false, maintenanceNotice: "", pricePerCreditInr: 2 });
+
+  const handleOpenBuyCredits = (modeOrPlan) => {
+    if (modeOrPlan === "pro" || modeOrPlan === "enterprise") {
+      setBuyCreditsModalProps({ isOpen: true, mode: "plan", plan: modeOrPlan });
+    } else {
+      setBuyCreditsModalProps({ isOpen: true, mode: "credits", plan: "pro" });
+    }
+  };
+
   const [form, setForm] = useState({
     userName: "",
     email: "",
@@ -109,7 +133,52 @@ export default function App() {
       }
     }
     restoreSession();
+
+    // Check system maintenance mode
+    async function checkSystemStatus() {
+      try {
+        const { data } = await api.get("/api/system/public-config");
+        if (data && data.success) {
+          setSystemConfig({
+            maintenanceMode: data.maintenanceMode || false,
+            maintenanceNotice: data.maintenanceNotice || "",
+            pricePerCreditInr: data.pricePerCreditInr !== undefined ? data.pricePerCreditInr : 2,
+          });
+        }
+      } catch (err) {
+        // Fail open if system config route fails
+      }
+    }
+    checkSystemStatus();
   }, []);
+
+  // Sync user profile & credits from API whenever view changes or on mount
+  useEffect(() => {
+    if (!user) return;
+    async function syncUserCredits() {
+      try {
+        const { data } = await api.get("/api/user/profile");
+        if (data && data.success && data.profile) {
+          setUser((prev) => {
+            if (!prev) return prev;
+            const updated = {
+              ...prev,
+              name: data.profile.name || prev.name,
+              aiCredits: data.profile.aiCredits,
+              subscription: data.profile.subscription,
+              role: data.profile.role,
+              status: data.profile.status,
+            };
+            localStorage.setItem("user", JSON.stringify(updated));
+            return updated;
+          });
+        }
+      } catch (err) {
+        // Silent catch if offline or unauthenticated
+      }
+    }
+    syncUserCredits();
+  }, [view]);
 
   // Detect password reset token OR email verification result in URL on mount
   useEffect(() => {
@@ -122,13 +191,11 @@ export default function App() {
       setResetToken(resetTok);
       setView("reset-password");
     } else if (verified === "true") {
-      setVerifiedToast("success");
+      toast.success("Email verified successfully! You can now log in.", { id: "email-verified" });
       setView("login");
-      setTimeout(() => setVerifiedToast(""), 6000);
     } else if (verifyError) {
-      setVerifiedToast("error");
+      toast.error("Verification link is invalid or expired.", { id: "email-verify-error" });
       setView("login");
-      setTimeout(() => setVerifiedToast(""), 6000);
     }
 
     // Clean query params from URL bar
@@ -202,200 +269,53 @@ export default function App() {
 
   return (
     <div>
+      {systemConfig.maintenanceMode && (
+        <MaintenanceScreen notice={systemConfig.maintenanceNotice} />
+      )}
+
+      <ImpersonationBanner user={user} onExit={handleLogout} />
+
+      {/* Global Toast Container */}
+      <Toaster
+        position={typeof window !== "undefined" && window.innerWidth < 640 ? "top-center" : "top-right"}
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "var(--bg-dark, #2e2520)",
+            color: "#ffffff",
+            borderRadius: "14px",
+            border: "1px solid rgba(217, 119, 6, 0.3)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+            padding: "12px 18px",
+            fontSize: "0.9rem",
+            maxWidth: "90vw",
+          },
+          success: {
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#ffffff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#e11d48",
+              secondary: "#ffffff",
+            },
+          },
+        }}
+      />
+
       {/* ===== NAVBAR ===== */}
-      <nav className="navbar">
-        {/* Brand Logo */}
-        <button
-          className="navbar-brand"
-          style={{ background: "none", color: "inherit", padding: 0, boxShadow: "none", transform: "none", fontFamily: "inherit", overflow: "visible", whiteSpace: "nowrap" }}
-          onClick={() => navigate("home")}
-        >
-          <span className="brand-dot" />
-          ResumeAI
-        </button>
-
-        {/* Desktop Center Tabs */}
-        <div className="navbar-center navbar-desktop-only">
-          {view !== "home" && view !== "login" ? (
-            <>
-              <button
-                className={`nav-link ${view === "builder" ? "active" : ""}`}
-                onMouseEnter={() => preloadRoute("builder")}
-                onClick={() => navigate("builder")}
-              >
-                ✏️ Resume Builder
-              </button>
-              <button
-                className={`nav-link ${view === "analyzer" ? "active" : ""}`}
-                onMouseEnter={() => preloadRoute("analyzer")}
-                onClick={() => navigate("analyzer")}
-              >
-                🔍 AI Analyzer
-              </button>
-            </>
-          ) : view === "home" ? (
-            <>
-              <button className="nav-link" onMouseEnter={() => preloadRoute("builder")} onClick={() => navigate("builder")}>Builder</button>
-              <button className="nav-link" onMouseEnter={() => preloadRoute("analyzer")} onClick={() => navigate("analyzer")}>Analyzer</button>
-            </>
-          ) : null}
-        </div>
-
-        {/* Desktop Auth Actions */}
-        <div className="navbar-actions navbar-desktop-only">
-          {user ? (
-            <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-              <button
-                onClick={() => navigate("profile")}
-                onMouseEnter={() => preloadRoute("profile")}
-                title="View & Edit Profile"
-                style={{
-                  background: view === "profile" ? "var(--primary-light)" : "transparent",
-                  border: view === "profile" ? "1.5px solid var(--accent)" : "1.5px solid var(--border)",
-                  color: "var(--text-main)",
-                  padding: "0.45rem 1rem",
-                  fontSize: "0.875rem",
-                  borderRadius: "20px",
-                  boxShadow: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.4rem",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                <span style={{ fontSize: "1rem" }}>👤</span>
-                <span style={{ fontWeight: "700" }}>{user.name}</span>
-              </button>
-              <button
-                className="btn-nav secondary"
-                style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-main)", padding: "0.5rem 1.1rem", fontSize: "0.875rem", borderRadius: "8px", boxShadow: "none" }}
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
-            <>
-              <button
-                className="btn-nav secondary"
-                style={{ background: "transparent", border: "1.5px solid var(--border)", color: "var(--text-main)", padding: "0.5rem 1.1rem", fontSize: "0.875rem", borderRadius: "8px", boxShadow: "none" }}
-                onMouseEnter={() => preloadRoute("login")}
-                onClick={() => navigate("login")}
-              >
-                Log In
-              </button>
-              <button
-                className="btn-nav"
-                style={{ padding: "0.5rem 1.1rem", fontSize: "0.875rem", borderRadius: "8px" }}
-                onMouseEnter={() => preloadRoute("builder")}
-                onClick={() => {
-                  setRedirectTarget("builder");
-                  setView("login");
-                }}
-              >
-                Get Started
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Mobile Hamburger Button */}
-        <button
-          className="hamburger-btn"
-          onClick={() => setMobileMenuOpen(o => !o)}
-          aria-label="Toggle menu"
-          aria-expanded={mobileMenuOpen}
-        >
-          <span className={`hamburger-line ${mobileMenuOpen ? "open-1" : ""}`} />
-          <span className={`hamburger-line ${mobileMenuOpen ? "open-2" : ""}`} />
-          <span className={`hamburger-line ${mobileMenuOpen ? "open-3" : ""}`} />
-        </button>
-      </nav>
-
-      {/* Mobile Slide-Down Drawer */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            key="mobile-menu"
-            className="mobile-menu"
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-          >
-            {/* Nav Links */}
-            <div className="mobile-menu-links">
-              <button
-                className={`mobile-nav-link ${view === "home" ? "active" : ""}`}
-                onClick={() => navigate("home")}
-              >
-                🏠 Home
-              </button>
-              <button
-                className={`mobile-nav-link ${view === "builder" ? "active" : ""}`}
-                onClick={() => navigate("builder")}
-              >
-                ✏️ Resume Builder
-              </button>
-              <button
-                className={`mobile-nav-link ${view === "analyzer" ? "active" : ""}`}
-                onClick={() => navigate("analyzer")}
-              >
-                🔍 AI Analyzer
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div className="mobile-menu-divider" />
-
-            {/* Auth Section */}
-            <div className="mobile-menu-auth">
-              {user ? (
-                <>
-                  <div
-                    className="mobile-user-info"
-                    onClick={() => navigate("profile")}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <span className="mobile-user-avatar">👤</span>
-                    <div>
-                      <div className="mobile-user-name">{user.name}</div>
-                      <div className="mobile-user-email">{user.email}</div>
-                    </div>
-                  </div>
-                  <button
-                    className="mobile-auth-btn mobile-auth-btn-secondary"
-                    onClick={handleLogout}
-                  >
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <div className="mobile-auth-row">
-                  <button
-                    className="mobile-auth-btn mobile-auth-btn-secondary"
-                    onClick={() => navigate("login")}
-                  >
-                    Log In
-                  </button>
-                  <button
-                    className="mobile-auth-btn mobile-auth-btn-primary"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      setRedirectTarget("builder");
-                      setView("login");
-                      scrollToTop();
-                    }}
-                  >
-                    Get Started →
-                  </button>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Header
+        view={view}
+        user={user}
+        onNavigate={navigate}
+        onPreloadRoute={preloadRoute}
+        onLogout={handleLogout}
+        onOpenNotifications={() => setShowNotificationsModal(true)}
+        onOpenSupport={() => setShowSupportModal(true)}
+        onOpenBuyCredits={handleOpenBuyCredits}
+      />
 
       {/* ── Email Verification Toast ── */}
       <AnimatePresence>
@@ -449,7 +369,17 @@ export default function App() {
         {view === "home" && <HeroPage navigate={navigate} />}
         {view === "builder" && <ResumeBuilder form={form} setForm={setForm} />}
         {view === "analyzer" && <ResumeAnalyzer form={form} setForm={setForm} setView={setView} />}
-        {view === "profile" && <Profile user={user} setUser={setUser} navigate={navigate} setForm={setForm} handleLogout={handleLogout} />}
+        {view === "profile" && (
+          <Profile
+            user={user}
+            setUser={setUser}
+            navigate={navigate}
+            setForm={setForm}
+            handleLogout={handleLogout}
+            onOpenSupport={() => setShowSupportModal(true)}
+            onOpenBuyCredits={handleOpenBuyCredits}
+          />
+        )}
         {view === "login" && <Auth onAuthSuccess={handleAuthSuccess} />}
         {view === "reset-password" && (
           <ResetPassword
@@ -462,6 +392,38 @@ export default function App() {
           />
         )}
       </Suspense>
+
+      <NotificationCenterModal
+        isOpen={showNotificationsModal}
+        onClose={() => setShowNotificationsModal(false)}
+      />
+
+      <SupportTicketsModal
+        isOpen={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+      />
+
+      <BuyCreditsModal
+        isOpen={buyCreditsModalProps.isOpen}
+        onClose={() => setBuyCreditsModalProps((prev) => ({ ...prev, isOpen: false }))}
+        user={user}
+        initialMode={buyCreditsModalProps.mode}
+        initialPlan={buyCreditsModalProps.plan}
+        pricePerCreditInr={systemConfig.pricePerCreditInr}
+        onCreditsPurchased={(newCredits, newSubscription) => {
+          setUser((prev) => {
+            const updated = {
+              ...prev,
+              aiCredits: newCredits !== undefined ? newCredits : prev?.aiCredits,
+              subscription: newSubscription || prev?.subscription,
+            };
+            localStorage.setItem("user", JSON.stringify(updated));
+            return updated;
+          });
+        }}
+      />
+
+      <Footer onNavigate={navigate} />
     </div>
   );
 }
@@ -472,7 +434,7 @@ function HeroPage({ navigate }) {
 
   return (
     <>
-      {/* HERO */}
+      {/* HERO SECTION */}
       <section className="hero-section">
         <div className="hero-bg-grid" />
         <div className="hero-bg-glow" />
@@ -481,40 +443,38 @@ function HeroPage({ navigate }) {
         <div className="hero-grid-split">
           {/* LEFT CONTENT */}
           <motion.div 
-            initial={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.6 }}
             className="hero-content"
           >
-            <div className="hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
-              <LottieIcon type="sparkle" width={20} height={20} />
-              <span className="badge-dot" />
-              AI-Powered Resume Intelligence
+            <div className="hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", padding: "0.4rem 1rem", borderRadius: "20px", background: "rgba(217, 119, 6, 0.08)", border: "1px solid rgba(217, 119, 6, 0.25)", color: "var(--accent)", fontSize: "0.85rem", fontWeight: 700 }}>
+              <Sparkles size={16} color="var(--accent)" />
+              <span>AI-Powered Resume & ATS Intelligence</span>
             </div>
 
-            <h1 className="hero-title">
+            <h1 className="hero-title" style={{ fontSize: "3.2rem", fontWeight: 800, lineHeight: 1.15, margin: "1rem 0" }}>
               Build Resumes That<br />
-              <span className="gradient-text" style={{ background: "linear-gradient(135deg, var(--accent) 0%, #d97706 50%, #f59e0b 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              <span className="gradient-text" style={{ background: "linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                 Actually Get You Hired
               </span>
             </h1>
 
-            <p className="hero-subtitle">
-              Create professional, ATS-optimized resumes in minutes — then let our AI
-              analyze every detail and give you a real score before you apply.
+            <p className="hero-subtitle" style={{ fontSize: "1.05rem", color: "var(--text-muted)", lineHeight: 1.7, marginBottom: "2rem", maxWidth: "560px" }}>
+              Create professional, ATS-optimized resumes in minutes — then let our AI analyze every detail and give you a real ATS compatibility score before you apply.
             </p>
 
-            <div className="hero-actions" style={{ gap: "1rem" }}>
+            <div className="hero-actions" style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
               <button 
                 className="glow-btn" 
-                style={{ padding: "0.9rem 2.2rem", fontSize: "1rem", borderRadius: "16px", fontWeight: "700" }} 
+                style={{ padding: "0.85rem 2rem", fontSize: "1rem", borderRadius: "14px", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "0.5rem" }} 
                 onClick={() => navigate("builder")}
               >
                 🚀 Build My Resume
               </button>
 
               <Suspense fallback={
-                <button className="rive-cta-btn" style={{ padding: "0.8rem 2rem", fontSize: "1rem", fontWeight: "700", borderRadius: "16px", background: "var(--accent)", color: "white", border: "none" }} onClick={() => navigate("analyzer")}>
+                <button className="nav-secondary-btn" style={{ padding: "0.85rem 1.8rem", fontSize: "1rem", borderRadius: "14px" }} onClick={() => navigate("analyzer")}>
                   ✨ Analyze Resume
                 </button>
               }>
@@ -534,47 +494,47 @@ function HeroPage({ navigate }) {
             {analyzingState && (
               <div style={{ marginTop: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <LottieIcon type="spinner" width={24} height={24} />
-                <span className="dots-typing" style={{ fontSize: "0.9rem", color: "var(--accent)" }}>
-                  AI is analyzing <span></span><span></span><span></span>
+                <span className="dots-typing" style={{ fontSize: "0.9rem", color: "var(--accent)", fontWeight: 600 }}>
+                  AI scanner inspecting keywords <span></span><span></span><span></span>
                 </span>
               </div>
             )}
 
-            <div className="hero-stats">
+            <div className="hero-stats" style={{ marginTop: "2.5rem", display: "flex", gap: "2rem" }}>
               <div className="stat-item">
-                <div className="stat-number">
+                <div className="stat-number" style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--primary)" }}>
                   <CountUp end={98} duration={2} suffix="%" />
                 </div>
-                <div className="stat-label">ATS Pass Rate</div>
+                <div className="stat-label" style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: 600 }}>ATS Pass Rate</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number">
+                <div className="stat-number" style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--primary)" }}>
                   <CountUp end={2} duration={1.5} suffix=" min" />
                 </div>
-                <div className="stat-label">Avg. Build Time</div>
+                <div className="stat-label" style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: 600 }}>Avg. Build Time</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number stat-ai">
+                <div className="stat-number stat-ai" style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--accent)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
                   <span>AI</span>
                   <LottieIcon type="success" width={22} height={22} loop={false} />
                 </div>
-                <div className="stat-label">Smart Analysis</div>
+                <div className="stat-label" style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontWeight: 600 }}>Smart Audit</div>
               </div>
             </div>
           </motion.div>
 
           {/* RIGHT 3D CANVAS */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1 }}
+            transition={{ duration: 0.8, delay: 0.15 }}
             className="hero-3d-container"
-            style={{ position: "relative", width: "100%", height: "100%" }}
+            style={{ position: "relative", width: "100%", height: "520px", minHeight: "520px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: "24px" }}
           >
-            <div style={{ height: "100%", width: "100%" }}>
+            <div style={{ height: "520px", width: "100%", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: "24px" }}>
               <Suspense fallback={
-                <div style={{ width: "100%", height: "100%", minHeight: "450px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "24px", background: "rgba(248, 250, 252, 0.5)" }}>
-                  <LottieIcon type="spinner" width={36} height={36} />
+                <div style={{ width: "100%", height: "520px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "24px", background: "rgba(248, 250, 252, 0.6)", border: "1px solid var(--border)" }}>
+                  <LottieIcon type="spinner" width={48} height={48} />
                 </div>
               }>
                 <ResumeScene3D />
@@ -585,136 +545,137 @@ function HeroPage({ navigate }) {
       </section>
 
       {/* FEATURES */}
-      <section className="features-section" style={{ background: "transparent" }}>
-        <div className="section-header">
-          <span className="section-label" style={{ color: "var(--accent)" }}>What We Offer</span>
-          <h2 className="section-title">Everything you need to land the job</h2>
-          <p className="section-subtitle">
-            From building to analyzing, we have every step covered with powerful AI tools.
-          </p>
-        </div>
-
-        <div className="features-grid">
-          <motion.div 
-            whileHover={{ y: -8 }}
-            className="feature-card glass-panel"
-          >
-            <div className="feature-icon" style={{ background: "rgba(37, 99, 235, 0.1)" }}>✏️</div>
-            <h3 className="feature-title">Smart Resume Builder</h3>
-            <p className="feature-desc">
-              Fill in your details and watch a beautiful, professional resume come to life in real-time.
-              Download it as a clean, ATS-readable PDF.
-            </p>
-          </motion.div>
-          <motion.div 
-            whileHover={{ y: -8 }}
-            className="feature-card glass-panel"
-          >
-            <div className="feature-icon" style={{ background: "rgba(37, 99, 235, 0.1)" }}>🤖</div>
-            <h3 className="feature-title">AI-Powered Analysis</h3>
-            <p className="feature-desc">
-              Upload any resume and get an instant AI-generated score, ATS rating, strengths,
-              weaknesses, and personalized improvement tips.
-            </p>
-          </motion.div>
-          <motion.div 
-            whileHover={{ y: -8 }}
-            className="feature-card glass-panel"
-          >
-            <div className="feature-icon" style={{ background: "rgba(37, 99, 235, 0.1)" }}>🎯</div>
-            <h3 className="feature-title">Job Description Matching</h3>
-            <p className="feature-desc">
-              Paste a job description and our AI compares your resume against it — showing you
-              exactly what keywords are missing and how to fix them.
-            </p>
-          </motion.div>
-          <motion.div 
-            whileHover={{ y: -8 }}
-            className="feature-card glass-panel"
-          >
-            <div className="feature-icon" style={{ background: "rgba(37, 99, 235, 0.1)" }}>⚡</div>
-            <h3 className="feature-title">Instant ATS Score</h3>
-            <p className="feature-desc">
-              Get a real-time ATS compatibility score so you know your resume will actually
-              pass automated screening systems before you even apply.
-            </p>
-          </motion.div>
-          <motion.div 
-            whileHover={{ y: -8 }}
-            className="feature-card glass-panel"
-          >
-            <div className="feature-icon" style={{ background: "rgba(37, 99, 235, 0.1)" }}>📊</div>
-            <h3 className="feature-title">Keyword Suggestions</h3>
-            <p className="feature-desc">
-              One-click missing keyword additions from your analysis — seamlessly add
-              important skills to your builder profile instantly.
-            </p>
-          </motion.div>
-          <motion.div 
-            whileHover={{ y: -8 }}
-            className="feature-card glass-panel"
-          >
-            <div className="feature-icon" style={{ background: "rgba(37, 99, 235, 0.1)" }}>💾</div>
-            <h3 className="feature-title">Cloud Save</h3>
-            <p className="feature-desc">
-              Save your resume to our database and access it anytime.
-              Your data is always secure and ready to update.
-            </p>
-          </motion.div>
-        </div>
-      {/* HOW IT WORKS */}
-      <section style={{ padding: "4rem 2rem 5rem", background: "var(--surface-2)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
+      <section className="features-section" style={{ padding: "4.5rem 1.5rem", background: "transparent" }}>
         <div className="container">
-          <div className="section-header" style={{ marginBottom: "3rem" }}>
-            <span className="section-label" style={{ color: "var(--accent)" }}>Simple Process</span>
-            <h2 className="section-title">How ResumeAI Works in 3 Steps</h2>
-            <p className="section-subtitle">
+          <div className="section-header" style={{ textAlign: "center", marginBottom: "3rem" }}>
+            <span className="section-label" style={{ color: "var(--accent)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 800, fontSize: "0.8rem" }}>What We Offer</span>
+            <h2 className="section-title" style={{ fontSize: "2.2rem", marginTop: "0.4rem" }}>Everything You Need to Land the Job</h2>
+            <p className="section-subtitle" style={{ maxWidth: "600px", margin: "0.5rem auto 0" }}>
+              From live real-time building to instant AI resume scoring, we have every step covered.
+            </p>
+          </div>
+
+          <div className="features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
+            <motion.div whileHover={{ y: -6 }} className="feature-card glass-panel" style={{ padding: "1.75rem", borderRadius: "18px" }}>
+              <div className="feature-icon" style={{ width: "48px", height: "48px", borderRadius: "14px", background: "rgba(217, 119, 6, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                <Sparkles size={22} color="var(--accent)" />
+              </div>
+              <h3 className="feature-title" style={{ fontSize: "1.15rem", marginBottom: "0.5rem" }}>Smart Resume Builder</h3>
+              <p className="feature-desc" style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                Fill in your details and watch a beautiful, professional resume come to life in real-time. Download as a clean, ATS-readable PDF.
+              </p>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -6 }} className="feature-card glass-panel" style={{ padding: "1.75rem", borderRadius: "18px" }}>
+              <div className="feature-icon" style={{ width: "48px", height: "48px", borderRadius: "14px", background: "rgba(217, 119, 6, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                <Cpu size={22} color="var(--accent)" />
+              </div>
+              <h3 className="feature-title" style={{ fontSize: "1.15rem", marginBottom: "0.5rem" }}>AI-Powered Analysis</h3>
+              <p className="feature-desc" style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                Upload any resume and get an instant AI-generated score, ATS rating, strengths, weaknesses, and personalized improvement tips.
+              </p>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -6 }} className="feature-card glass-panel" style={{ padding: "1.75rem", borderRadius: "18px" }}>
+              <div className="feature-icon" style={{ width: "48px", height: "48px", borderRadius: "14px", background: "rgba(217, 119, 6, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                <Target size={22} color="var(--accent)" />
+              </div>
+              <h3 className="feature-title" style={{ fontSize: "1.15rem", marginBottom: "0.5rem" }}>Job Description Matching</h3>
+              <p className="feature-desc" style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                Paste a job description and our AI compares your resume against it — showing you exactly what keywords are missing and how to fix them.
+              </p>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -6 }} className="feature-card glass-panel" style={{ padding: "1.75rem", borderRadius: "18px" }}>
+              <div className="feature-icon" style={{ width: "48px", height: "48px", borderRadius: "14px", background: "rgba(217, 119, 6, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                <Gauge size={22} color="var(--accent)" />
+              </div>
+              <h3 className="feature-title" style={{ fontSize: "1.15rem", marginBottom: "0.5rem" }}>Instant ATS Score</h3>
+              <p className="feature-desc" style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                Get a real-time ATS compatibility score so you know your resume will actually pass automated screening systems before you even apply.
+              </p>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -6 }} className="feature-card glass-panel" style={{ padding: "1.75rem", borderRadius: "18px" }}>
+              <div className="feature-icon" style={{ width: "48px", height: "48px", borderRadius: "14px", background: "rgba(217, 119, 6, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                <CheckCircle2 size={22} color="var(--accent)" />
+              </div>
+              <h3 className="feature-title" style={{ fontSize: "1.15rem", marginBottom: "0.5rem" }}>Keyword Suggestions</h3>
+              <p className="feature-desc" style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                One-click missing keyword additions from your analysis — seamlessly add important skills to your builder profile instantly.
+              </p>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -6 }} className="feature-card glass-panel" style={{ padding: "1.75rem", borderRadius: "18px" }}>
+              <div className="feature-icon" style={{ width: "48px", height: "48px", borderRadius: "14px", background: "rgba(217, 119, 6, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                <Cloud size={22} color="var(--accent)" />
+              </div>
+              <h3 className="feature-title" style={{ fontSize: "1.15rem", marginBottom: "0.5rem" }}>Cloud Save</h3>
+              <p className="feature-desc" style={{ fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                Save your resume to our database and access it anytime. Your data is always secure and ready to update whenever you need.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS PROCESS */}
+      <section style={{ padding: "4.5rem 1.5rem 5rem", background: "var(--surface-2)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
+        <div className="container">
+          <div className="section-header" style={{ textAlign: "center", marginBottom: "3rem" }}>
+            <span className="section-label" style={{ color: "var(--accent)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 800, fontSize: "0.8rem" }}>Simple Process</span>
+            <h2 className="section-title" style={{ fontSize: "2.2rem", marginTop: "0.4rem" }}>How ResumeAI Works in 3 Steps</h2>
+            <p className="section-subtitle" style={{ maxWidth: "560px", margin: "0.5rem auto 0" }}>
               From raw draft to recruiter-ready resume in less than two minutes.
             </p>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2rem", maxWidth: "1100px", margin: "0 auto" }}>
-            <motion.div whileHover={{ y: -6 }} className="card glass-panel" style={{ padding: "2rem", textAlign: "center" }}>
-              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "var(--accent)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "1.2rem", margin: "0 auto 1.25rem", boxShadow: "0 4px 15px rgba(217, 119, 6, 0.3)" }}>1</div>
-              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Enter Your Background</h3>
-              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: "1.6" }}>
+            <motion.div whileHover={{ y: -6 }} className="card glass-panel" style={{ padding: "2rem", textAlign: "center", borderRadius: "20px" }}>
+              <div style={{ width: "50px", height: "50px", borderRadius: "50%", background: "var(--accent)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "1.25rem", margin: "0 auto 1.25rem", boxShadow: "0 4px 15px rgba(217, 119, 6, 0.3)" }}>1</div>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>Enter Your Background</h3>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
                 Fill in your education, experience, and skills in our intuitive builder — or upload an existing resume file directly.
               </p>
             </motion.div>
 
-            <motion.div whileHover={{ y: -6 }} className="card glass-panel" style={{ padding: "2rem", textAlign: "center" }}>
-              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "var(--primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "1.2rem", margin: "0 auto 1.25rem", boxShadow: "0 4px 15px rgba(46, 37, 32, 0.2)" }}>2</div>
-              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Instant AI Score & Audit</h3>
-              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: "1.6" }}>
+            <motion.div whileHover={{ y: -6 }} className="card glass-panel" style={{ padding: "2rem", textAlign: "center", borderRadius: "20px" }}>
+              <div style={{ width: "50px", height: "50px", borderRadius: "50%", background: "var(--primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "1.25rem", margin: "0 auto 1.25rem", boxShadow: "0 4px 15px rgba(46, 37, 32, 0.2)" }}>2</div>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>Instant AI Score & Audit</h3>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
                 Our AI inspects formatting, ATS compatibility, bullet impact, and job keyword alignment in seconds.
               </p>
             </motion.div>
 
-            <motion.div whileHover={{ y: -6 }} className="card glass-panel" style={{ padding: "2rem", textAlign: "center" }}>
-              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#10b981", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "1.2rem", margin: "0 auto 1.25rem", boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)" }}>3</div>
-              <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>1-Click Tailor & Export</h3>
-              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: "1.6" }}>
+            <motion.div whileHover={{ y: -6 }} className="card glass-panel" style={{ padding: "2rem", textAlign: "center", borderRadius: "20px" }}>
+              <div style={{ width: "50px", height: "50px", borderRadius: "50%", background: "#10b981", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: "1.25rem", margin: "0 auto 1.25rem", boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)" }}>3</div>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>1-Click Tailor & Export</h3>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
                 Apply AI suggestions with a single click and download a clean, text-readable PDF engineered to pass screening filters.
               </p>
             </motion.div>
           </div>
         </div>
       </section>
-      </section>
 
-      {/* CTA */}
-      <section className="cta-section" style={{ background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%)" }}>
-        <div className="cta-content">
+      {/* CTA SECTION */}
+      <section className="cta-section" style={{ background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%)", padding: "4.5rem 1.5rem", borderRadius: "0" }}>
+        <div className="cta-content" style={{ maxWidth: "700px", margin: "0 auto", textAlign: "center" }}>
           <div style={{ display: "inline-flex", justifyContent: "center", marginBottom: "1rem" }}>
-            <LottieIcon type="upload" width={80} height={80} />
+            <LottieIcon type="upload" width={110} height={110} />
           </div>
-          <h2 className="cta-title">Ready to land your dream job?</h2>
-          <p className="cta-subtitle">
-            Join thousands of job seekers who've improved their resume with ResumeAI.
-            Start for free — no sign up needed.
+          <h2 className="cta-title" style={{ fontSize: "2.3rem", color: "#ffffff", fontWeight: 800, marginBottom: "0.8rem" }}>
+            Ready to Land Your Dream Job?
+          </h2>
+          <p className="cta-subtitle" style={{ fontSize: "1.05rem", color: "#e7e5e4", marginBottom: "2rem", lineHeight: 1.6 }}>
+            Join thousands of job seekers who've improved their resume with ResumeAI. Start for free today.
           </p>
-          <button className="cta-btn" style={{ background: "white", color: "var(--primary)", border: "none" }} onClick={() => navigate("builder")}>
-            Start Building Now →
+          <button 
+            className="cta-btn" 
+            style={{ background: "#ffffff", color: "var(--primary)", border: "none", padding: "0.85rem 2.2rem", fontSize: "1rem", fontWeight: 800, borderRadius: "14px", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 8px 20px rgba(0,0,0,0.2)" }} 
+            onClick={() => navigate("builder")}
+          >
+            Start Building Now <ArrowRight size={18} />
           </button>
         </div>
       </section>

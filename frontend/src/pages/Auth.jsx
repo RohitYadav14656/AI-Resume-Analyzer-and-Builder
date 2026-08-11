@@ -3,6 +3,8 @@ import { useGoogleLogin } from "@react-oauth/google";
 import api from "../api";
 import { motion, AnimatePresence } from "framer-motion";
 import LottieIcon from "../components/LottieIcon";
+import WebsiteLogo from "../components/WebsiteLogo";
+import { toast } from "react-hot-toast";
 
 export default function Auth({ onAuthSuccess, initialTab = "login" }) {
   const [isLogin, setIsLogin] = useState(initialTab === "login");
@@ -84,6 +86,7 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
       }
 
       setSuccess(isLogin ? "Welcome back! Redirecting..." : "Registration successful! Welcome!");
+      toast.success(isLogin ? `Welcome back, ${response.data.user?.name || "User"}!` : "Account created successfully!");
       setTimeout(() => {
         onAuthSuccess(response.data.user, response.data.accessToken);
       }, 900);
@@ -94,13 +97,14 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
       if (data?.requiresVerification) {
         setVerificationEmail(email.trim());
         setVerificationPending(true);
+        toast.error("Please verify your email address before logging in.", { id: "auth-verify-required" });
         return;
       }
-      if (status === 401 || (data?.error && data.error.toLowerCase().includes("invalid"))) {
-        setError("Invalid email or password. Please check your credentials and try again.");
-      } else {
-        setError(data?.error || "Something went wrong. Please check your details and try again.");
-      }
+      const errMsg = status === 401 || (data?.error && data.error.toLowerCase().includes("invalid"))
+        ? "Invalid email or password. Please check your credentials."
+        : (data?.error || "Something went wrong. Please check your details.");
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -346,8 +350,16 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
   // MAIN AUTH PANEL
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="container animate-in" style={{ maxWidth: "480px", margin: "4rem auto 6rem" }}>
+    <div className="container animate-in" style={{ maxWidth: "480px", margin: "3rem auto 5rem" }}>
       <div className="card glass-panel" style={{ padding: "2.5rem 2rem", position: "relative" }}>
+
+        {/* Brand Header Logo */}
+        <div style={{ textAlign: "center", marginBottom: "1.75rem" }}>
+          <WebsiteLogo size="lg" />
+          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
+            {isLogin ? "Welcome back! Sign in to access your AI resumes" : "Create your free account to build ATS-friendly resumes"}
+          </p>
+        </div>
 
         {/* Toggle Header */}
         <AnimatePresence mode="wait">

@@ -44,6 +44,8 @@ function processQueue(error, token = null) {
   _refreshQueue = [];
 }
 
+import { toast } from "react-hot-toast";
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -83,10 +85,20 @@ api.interceptors.response.use(
         processQueue(refreshError, null);
         clearAccessToken();
         if (typeof _onLogout === "function") _onLogout();
+        toast.error("Session expired. Please log in again.", { id: "session-expired" });
         return Promise.reject(refreshError);
       } finally {
         _isRefreshing = false;
       }
+    }
+
+    // Backend error notifications
+    if (error.response?.status === 429) {
+      toast.error("Too many requests! Please wait a moment before trying again.", { id: "rate-limit" });
+    } else if (error.response?.status >= 500) {
+      toast.error(error.response?.data?.message || "Server error occurred. Please try again later.", { id: "server-error" });
+    } else if (!error.response && error.code === "ERR_NETWORK") {
+      toast.error("Network connection error. Check your internet connection.", { id: "network-error" });
     }
 
     return Promise.reject(error);
@@ -129,5 +141,15 @@ export async function exportUserData() {
 
 export async function deleteUserAccount() {
   const { data } = await api.delete("/api/user/account");
+  return data;
+}
+
+export async function fetchPricingConfig() {
+  const { data } = await api.get("/api/user/pricing-config");
+  return data;
+}
+
+export async function upgradeUserSubscription(plan) {
+  const { data } = await api.post("/api/user/upgrade-subscription", { plan });
   return data;
 }

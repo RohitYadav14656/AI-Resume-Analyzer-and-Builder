@@ -46,7 +46,18 @@ const ResumeSchema = new mongoose.Schema(
     experience: [ExperienceSchema],
     education: [EducationSchema],
     projects: [ProjectSchema],
+    title: { type: String, default: "Untitled Resume" },
+    targetJob: { type: String, default: "Full Stack Developer" },
+    atsScore: { type: Number, default: 85 },
+    atsAnalysis: {
+      matchedKeywords: [String],
+      missingSkills: [String],
+      suggestions: [String],
+      industryMatch: String,
+    },
     extra: String,
+    isFlagged: { type: Boolean, default: false },
+    flagReason: { type: String, default: "" },
   },
   { timestamps: true }
 );

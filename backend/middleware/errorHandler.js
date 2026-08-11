@@ -91,14 +91,17 @@ function errorHandler(err, req, res, next) {
   const { status, message, errors } = classifyError(err);
 
   // ── Always log the REAL error on the server ───────────────────────────────────
+  // Avoid printing heavy stack traces for expected operational 401/403/404 errors
+  const isExpectedClientError = status === 401 || status === 403 || status === 404;
+
   console.error(
     `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} → ${status}`,
     {
       message: err.message,
       name: err.name,
       code: err.code,
-      // Only log stack in development
-      ...(IS_PROD ? {} : { stack: err.stack }),
+      // Only log stack in development for unexpected server errors (500+)
+      ...(IS_PROD || isExpectedClientError ? {} : { stack: err.stack }),
     }
   );
 

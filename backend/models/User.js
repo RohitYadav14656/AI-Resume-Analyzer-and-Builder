@@ -19,6 +19,58 @@ const UserSchema = new mongoose.Schema(
       required: false, // Optional — Google users have no password
       default: null,
     },
+    role: {
+      type: String,
+      enum: ["user", "admin", "moderator", "support"],
+      default: "user",
+    },
+    status: {
+      type: String,
+      enum: ["active", "suspended"],
+      default: "active",
+    },
+    subscription: {
+      type: String,
+      enum: ["free", "normal", "pro", "enterprise"],
+      default: "normal",
+    },
+    aiCredits: {
+      type: Number,
+      default: 10,
+    },
+    lastDailyCreditBonus: {
+      type: Date,
+      default: null,
+    },
+    aiUsageCount: {
+      type: Number,
+      default: 0,
+    },
+    firstLogin: {
+      type: Date,
+      default: null,
+    },
+    lastLogin: {
+      type: Date,
+      default: Date.now,
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+    lastActiveAt: {
+      type: Date,
+      default: Date.now,
+    },
+    failedLogins: {
+      type: Number,
+      default: 0,
+    },
+    permissions: [
+      {
+        type: String,
+      },
+    ],
 
     // ── Google OAuth ────────────────────────────────────────────────────────
     googleId: {
