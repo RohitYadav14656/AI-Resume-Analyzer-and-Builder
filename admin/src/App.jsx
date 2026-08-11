@@ -30,6 +30,20 @@ const ViewLoader = () => (
   </div>
 );
 
+export const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (typeof window !== "undefined") {
+    const { hostname, protocol } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.") || hostname.startsWith("10.") || hostname.startsWith("172.")) {
+      return `${protocol}//${hostname}:5000`;
+    }
+  }
+  return "http://localhost:5000";
+};
+
+axios.defaults.baseURL = getApiBaseUrl();
+
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem("adminToken") || null);
   const [adminUser, setAdminUser] = useState(() => {
@@ -112,7 +126,7 @@ export default function App() {
 
   // Socket.IO Setup
   useEffect(() => {
-    const socket = io("http://localhost:5000", {
+    const socket = io(getApiBaseUrl(), {
       reconnectionAttempts: 5,
       timeout: 5000,
     });

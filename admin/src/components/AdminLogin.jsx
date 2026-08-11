@@ -59,7 +59,7 @@ export default function AdminLogin({ onLoginSuccess }) {
       }
     } catch (err) {
       console.warn("Request OTP error, trying direct login fallback:", err);
-      // Fallback: If server endpoint returns error, attempt standard auth
+      // Fallback: Attempt standard auth login if OTP endpoint is unavailable
       try {
         const fallbackRes = await axios.post("/api/auth/login", { email, password });
         if (fallbackRes.data && fallbackRes.data.success) {
@@ -67,10 +67,13 @@ export default function AdminLogin({ onLoginSuccess }) {
           onLoginSuccess(fallbackRes.data.token || "admin-session-token", fallbackRes.data.user);
           return;
         }
-      } catch {
-        // Local preview bypass
-        toast.success("Welcome to Admin Control Center (Demo Mode)");
-        handleBypassDemo();
+        const errMsg = fallbackRes.data?.message || "Invalid admin credentials";
+        setError(errMsg);
+        toast.error(errMsg);
+      } catch (fallbackErr) {
+        const errMsg = fallbackErr.response?.data?.message || err.response?.data?.message || "Authentication failed. Please check your credentials and server connection.";
+        setError(errMsg);
+        toast.error(errMsg);
       }
     } finally {
       setLoading(false);

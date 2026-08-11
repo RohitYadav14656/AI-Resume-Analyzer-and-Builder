@@ -1,6 +1,18 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (typeof window !== "undefined") {
+    const { hostname, protocol } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.") || hostname.startsWith("10.") || hostname.startsWith("172.")) {
+      return `${protocol}//${hostname}:5000`;
+    }
+  }
+  return "http://localhost:5000";
+};
+
+const API_BASE = getApiBaseUrl();
 
 let _accessToken = null;
 let _onLogout = null;
