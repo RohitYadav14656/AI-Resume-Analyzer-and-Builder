@@ -32,6 +32,7 @@ export default function Header({
   const [scrolled, setScrolled] = useState(false);
 
   const mobileDropdownRef = useRef(null);
+  const mobileMenuRef = useRef(null);
   const desktopDropdownRef = useRef(null);
 
   useEffect(() => {
@@ -61,7 +62,11 @@ export default function Header({
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (mobileDropdownRef.current && !mobileDropdownRef.current.contains(e.target)) {
+      if (
+        mobileDropdownRef.current && 
+        !mobileDropdownRef.current.contains(e.target) &&
+        (!mobileMenuRef.current || !mobileMenuRef.current.contains(e.target))
+      ) {
         setMobileMenuOpen(false);
       }
       if (desktopDropdownRef.current && !desktopDropdownRef.current.contains(e.target)) {
@@ -488,6 +493,7 @@ export default function Header({
       {/* ===== MOBILE SCREEN USER DROPDOWN MENU PANEL ===== */}
       {mobileMenuOpen && (
         <div
+          ref={mobileMenuRef}
           className="mobile-dropdown-container"
           onClick={(e) => e.stopPropagation()}
           style={{
