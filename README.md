@@ -20,6 +20,9 @@ An AI-powered, production-grade web application designed to build ATS-optimized 
 - **Recent Activity Timeline:** Real-time event log tracking resume creation, updates, ATS audits, PDF exports, and AI suggestions.
 - **AI-Powered Grammar & Style Fixer:** Correct spelling, syntax, and action-verb impact in real-time.
 - **Invisible Text Layer PDF Embedding:** Embeds a searchable plain-text layer on PDF exports to guarantee 100% ATS readability.
+- **Comprehensive Admin Portal:** Dedicated real-time dashboard for managing users, monitoring system health, handling support tickets, and viewing AI/ATS analytics.
+- **Immersive 3D/Animated UI:** Incorporates cutting-edge animations via Framer Motion, `@react-three/fiber`, `@splinetool/react-spline`, and Lottie files for an engaging user experience.
+- **Socket.IO Real-Time Engine:** Live user status tracking, instant notifications, and real-time dashboard metrics updates.
 
 ---
 
@@ -90,6 +93,24 @@ npm run dev
 
 Access app at `http://localhost:5173`.
 
+#### 3. Admin Panel Setup
+```bash
+cd ../admin
+npm install
+```
+
+Configure `.env` (optional, defaults to `http://localhost:5000`):
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+Start dev server:
+```bash
+npm run dev
+```
+
+Access admin portal at `http://localhost:5174`.
+
 ---
 
 ## 📁 Architecture Directory Structure
@@ -98,16 +119,23 @@ Access app at `http://localhost:5173`.
 .
 ├── backend (Express/Node)
 │   ├── middleware/     → Rate-limiting, Zod validation, security, error handling
-│   ├── models/         → User, Resume, and RefreshToken schemas
-│   ├── routes/         → auth.js, analyze.js, resume.js, user.js
+│   ├── models/         → User, Resume, RefreshToken, AILog, Ticket, SystemConfig
+│   ├── routes/         → auth.js, analyze.js, resume.js, user.js, admin.js
 │   ├── uploads/        → Temporary storage for resume uploads (.pdf, .docx)
 │   ├── utils/          → Token utilities, email, and resume text parsing
 │   ├── validators/     → Input schemas & Zod validators
 │   └── server.js       → Application entry point
-└── frontend (React/Vite)
+├── frontend (React/Vite)
+│   ├── src/
+│   │   ├── api.js      → Axios instance & profile API helpers
+│   │   ├── components/ → 3D Scenes, modals, loading skeletons
+│   │   ├── pages/      → Profile.jsx, ResumeBuilder.jsx, ResumeAnalyzer.jsx, Auth.jsx
+│   │   └── main.jsx    → Frontend entry point
+│   └── index.html      → Base HTML template
+└── admin (React/Vite)
     ├── src/
-    │   ├── api.js      → Axios instance & profile API helpers
-    │   ├── pages/      → Profile.jsx, ResumeBuilder.jsx, ResumeAnalyzer.jsx, Auth.jsx, ResetPassword.jsx
-    │   └── main.jsx    → Frontend entry point
-    └── index.html      → Base HTML template
+    │   ├── components/ → Overview, UsersView, ResumesView, AIAnalyticsView, Health
+    │   ├── App.jsx     → Lazy-loaded routing & Socket.IO client logic
+    │   └── main.jsx    → Admin entry point
+    └── index.html      → Admin Base HTML template
 ```
