@@ -309,7 +309,11 @@ export default function App() {
           isRefreshing={isRefreshing}
           onOpenSearch={() => setIsSearchOpen(true)}
           socketConnected={socketConnected}
-          onToggleSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
+          onToggleSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
+          adminUser={adminUser}
+          onLogout={handleLogout}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
         />
 
         <main className="admin-main-content">
