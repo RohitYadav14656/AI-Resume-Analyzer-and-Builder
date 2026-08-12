@@ -389,13 +389,7 @@ export default function Header({
                 >
                   <LogIn size={16} /> Log In
                 </button>
-                <button
-                  className="nav-primary-btn"
-                  onMouseEnter={() => onPreloadRoute && onPreloadRoute("builder")}
-                  onClick={() => handleNavClick("builder")}
-                >
-                  Build Resume Free →
-                </button>
+
               </div>
             )}
           </div>
@@ -667,27 +661,7 @@ export default function Header({
                 >
                   <LogIn size={18} /> Log In / Register
                 </button>
-                <button
-                  className="mobile-start-btn"
-                  onClick={() => handleNavClick("builder")}
-                  style={{
-                    padding: "0.8rem 1rem",
-                    fontSize: "0.92rem",
-                    fontWeight: 700,
-                    borderRadius: "14px",
-                    background: "linear-gradient(135deg, #d97706, #b45309)",
-                    color: "white",
-                    border: "none",
-                    cursor: "pointer",
-                    boxShadow: "0 4px 16px rgba(217, 119, 6, 0.35)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "0.4rem"
-                  }}
-                >
-                  <Sparkles size={18} /> Build Resume Free →
-                </button>
+
               </div>
             )}
           </div>
