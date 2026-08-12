@@ -28,8 +28,11 @@ export default function Header({
   onOpenBuyCredits,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [desktopUserDropdownOpen, setDesktopUserDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const dropdownRef = useRef(null);
+
+  const mobileDropdownRef = useRef(null);
+  const desktopDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,25 +58,27 @@ export default function Header({
     };
   }, [mobileMenuOpen]);
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (mobileDropdownRef.current && !mobileDropdownRef.current.contains(e.target)) {
         setMobileMenuOpen(false);
       }
+      if (desktopDropdownRef.current && !desktopDropdownRef.current.contains(e.target)) {
+        setDesktopUserDropdownOpen(false);
+      }
     };
-    if (mobileMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
     };
-  }, [mobileMenuOpen]);
+  }, []);
 
   const handleNavClick = (to) => {
     setMobileMenuOpen(false);
+    setDesktopUserDropdownOpen(false);
     onNavigate(to);
   };
 
@@ -85,7 +90,7 @@ export default function Header({
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        .mobile-dropdown-item {
+        .mobile-dropdown-item, .desktop-dropdown-item {
           display: flex;
           align-items: center;
           gap: 0.75rem;
@@ -102,17 +107,18 @@ export default function Header({
           text-align: left;
         }
 
-        .mobile-dropdown-item:hover, .mobile-dropdown-item.active {
+        .mobile-dropdown-item:hover, .mobile-dropdown-item.active,
+        .desktop-dropdown-item:hover, .desktop-dropdown-item.active {
           background: rgba(217, 119, 6, 0.1);
           color: var(--accent);
           transform: translateX(4px);
         }
 
-        .mobile-dropdown-item.logout-item {
+        .mobile-dropdown-item.logout-item, .desktop-dropdown-item.logout-item {
           color: #e11d48;
         }
 
-        .mobile-dropdown-item.logout-item:hover {
+        .mobile-dropdown-item.logout-item:hover, .desktop-dropdown-item.logout-item:hover {
           background: rgba(225, 29, 72, 0.08);
           transform: translateX(4px);
         }
@@ -204,7 +210,7 @@ export default function Header({
           {/* Right: Desktop User Actions */}
           <div className="header-actions-desktop">
             {user ? (
-              <div className="user-action-group">
+              <div className="user-action-group" style={{ position: "relative" }} ref={desktopDropdownRef}>
                 {/* Notifications Trigger */}
                 <button
                   onClick={onOpenNotifications}
@@ -226,12 +232,13 @@ export default function Header({
                   <span className="btn-label">Support</span>
                 </button>
 
-                {/* Profile Button with AI Credits Badge */}
+                {/* Profile Button with AI Credits Badge (Triggers Desktop User Dropdown) */}
                 <button
-                  onClick={() => handleNavClick("profile")}
+                  onClick={() => setDesktopUserDropdownOpen((prev) => !prev)}
                   onMouseEnter={() => onPreloadRoute && onPreloadRoute("profile")}
-                  title="View Profile & Credits"
+                  title="Click for User Menu"
                   className={`profile-action-btn ${view === "profile" ? "active" : ""}`}
+                  style={{ display: "flex", alignItems: "center", gap: "0.45rem", cursor: "pointer" }}
                 >
                   <User size={17} />
                   <span className="user-name">{user.name}</span>
@@ -239,6 +246,14 @@ export default function Header({
                     <Zap size={12} fill="var(--accent)" color="var(--accent)" />
                     {user.aiCredits !== undefined ? user.aiCredits : 100}
                   </span>
+                  <ChevronDown
+                    size={14}
+                    style={{
+                      transform: desktopUserDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.2s ease",
+                      color: "var(--text-muted)"
+                    }}
+                  />
                 </button>
 
                 {/* Buy Credits CTA */}
@@ -258,6 +273,112 @@ export default function Header({
                 >
                   <LogOut size={16} />
                 </button>
+
+                {/* ===== DESKTOP USER FLOATING DROPDOWN MENU ===== */}
+                {desktopUserDropdownOpen && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 12px)",
+                      right: 0,
+                      width: "300px",
+                      background: "rgba(255, 255, 255, 0.98)",
+                      backdropFilter: "blur(24px)",
+                      WebkitBackdropFilter: "blur(24px)",
+                      border: "1.5px solid rgba(217, 119, 6, 0.25)",
+                      borderRadius: "20px",
+                      boxShadow: "0 20px 50px -10px rgba(15, 23, 42, 0.2), 0 4px 16px rgba(217, 119, 6, 0.1)",
+                      padding: "0.9rem",
+                      zIndex: 999,
+                      animation: "headerDropdownSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1)"
+                    }}
+                  >
+                    {/* User Card Header */}
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                      padding: "0.75rem",
+                      background: "linear-gradient(135deg, rgba(217, 119, 6, 0.08), rgba(245, 158, 11, 0.04))",
+                      borderRadius: "14px",
+                      marginBottom: "0.75rem",
+                      border: "1px solid rgba(217, 119, 6, 0.18)"
+                    }}>
+                      <div style={{
+                        width: "38px",
+                        height: "38px",
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, #d97706, #b45309)",
+                        color: "white",
+                        fontWeight: "800",
+                        fontSize: "1rem",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}>
+                        {user.name ? user.name[0].toUpperCase() : "U"}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.92rem", color: "var(--text-main)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {user.name}
+                        </div>
+                        <div style={{ fontSize: "0.76rem", color: "var(--accent)", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
+                          <Zap size={12} fill="var(--accent)" />
+                          {user.aiCredits !== undefined ? user.aiCredits : 100} Credits
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                      <button
+                        className={`desktop-dropdown-item ${view === "profile" ? "active" : ""}`}
+                        onClick={() => handleNavClick("profile")}
+                      >
+                        <User size={16} /> My Profile & Resumes
+                      </button>
+                      <button
+                        className="desktop-dropdown-item"
+                        onClick={() => {
+                          setDesktopUserDropdownOpen(false);
+                          onOpenNotifications && onOpenNotifications();
+                        }}
+                      >
+                        <Bell size={16} /> Notifications
+                      </button>
+                      <button
+                        className="desktop-dropdown-item"
+                        onClick={() => {
+                          setDesktopUserDropdownOpen(false);
+                          onOpenSupport && onOpenSupport();
+                        }}
+                      >
+                        <LifeBuoy size={16} /> Help Desk & Support
+                      </button>
+                      <button
+                        className="desktop-dropdown-item"
+                        onClick={() => {
+                          setDesktopUserDropdownOpen(false);
+                          onOpenBuyCredits && onOpenBuyCredits("credits");
+                        }}
+                      >
+                        <Plus size={16} /> Top up Credits
+                      </button>
+
+                      <div style={{ height: "1px", background: "var(--border)", margin: "0.3rem 0" }} />
+
+                      <button
+                        className="desktop-dropdown-item logout-item"
+                        onClick={() => {
+                          setDesktopUserDropdownOpen(false);
+                          onLogout && onLogout();
+                        }}
+                      >
+                        <LogOut size={16} /> Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="guest-action-group">
@@ -280,7 +401,7 @@ export default function Header({
           </div>
 
           {/* Mobile Screen Dropdown Trigger Button */}
-          <div className="mobile-dropdown-trigger-box" ref={dropdownRef}>
+          <div className="mobile-dropdown-trigger-box" ref={mobileDropdownRef}>
             <button
               className="mobile-hamburger-btn"
               onClick={(e) => {
