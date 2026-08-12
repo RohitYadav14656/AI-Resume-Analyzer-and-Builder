@@ -33,7 +33,7 @@ router.post("/", auth, upload.single("resume"), async (req, res, next) => {
     const config = await SystemConfig.findOne({ key: "global_settings" });
     const requiredCredits = config?.creditCostAnalyze !== undefined ? config.creditCostAnalyze : 1;
 
-    const currentUser = await User.findById(req.user.userId);
+    const currentUser = req.user ? await User.findById(req.user.userId) : null;
     if (currentUser && currentUser.aiCredits < requiredCredits && currentUser.role !== "admin") {
       return next(new AppError(`Insufficient AI Credits! This analysis costs ${requiredCredits} credit(s). You have ${currentUser.aiCredits} credit(s).`, 403));
     }

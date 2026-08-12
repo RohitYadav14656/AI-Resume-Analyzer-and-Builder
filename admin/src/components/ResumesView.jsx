@@ -108,8 +108,246 @@ export default function ResumesView({ resumes, setResumes, stats, token }) {
     dl.remove();
   };
 
-  const handleDownloadPDFSim = (r) => {
-    alert(`Initiated ATS PDF Generation & Download for "${r.title || "Resume"}"`);
+  const handleDownloadPDF = async (r) => {
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      const name = r.userName?.trim() || r.title?.trim() || "Resume";
+
+      // Create a hidden container for rendering the resume
+      const container = document.createElement("div");
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.style.top = "-9999px";
+      
+      const content = document.createElement("div");
+      content.style.padding = "40px 48px";
+      content.style.fontFamily = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+      content.style.color = "#1a1a1a";
+      content.style.width = "794px"; // A4 width
+      content.style.boxSizing = "border-box";
+      content.style.background = "#fff";
+      
+      // Header
+      const header = document.createElement("div");
+      header.style.textAlign = "center";
+      header.style.marginBottom = "20px";
+      header.style.paddingBottom = "16px";
+      header.style.borderBottom = "2.5px solid #d97706";
+      
+      header.innerHTML = `
+        <h1 style="margin: 0 0 6px 0; font-size: 22pt; color: #2e2520; text-transform: uppercase; letter-spacing: 2px;">
+          ${name}
+        </h1>
+        <p style="margin: 0; font-size: 9pt; color: #444;">
+          ${[r.email, r.phone, r.linkedin, r.github].filter(Boolean).join("  |  ")}
+        </p>
+      `;
+      content.appendChild(header);
+
+      // Summary
+      if (r.summary) {
+        const section = document.createElement("div");
+        section.style.marginBottom = "16px";
+        section.innerHTML = `
+          <h3 style="margin: 0 0 4px 0; font-size: 10pt; text-transform: uppercase; color: #d97706; letter-spacing: 1.5px;">Summary</h3>
+          <div style="border-bottom: 1.5px solid #d97706; margin-bottom: 8px;"></div>
+          <p style="margin: 0; font-size: 9.5pt; line-height: 1.5; color: #222;">${r.summary}</p>
+        `;
+        content.appendChild(section);
+      }
+
+      // Skills
+      let skillsList = [];
+      if (Array.isArray(r.skills)) {
+        skillsList = r.skills;
+      } else if (typeof r.skills === "string") {
+        skillsList = r.skills.split(",").map(s => s.trim()).filter(Boolean);
+      }
+      
+      if (skillsList.length > 0) {
+        const section = document.createElement("div");
+        section.style.marginBottom = "16px";
+        section.innerHTML = `
+          <h3 style="margin: 0 0 4px 0; font-size: 10pt; text-transform: uppercase; color: #d97706; letter-spacing: 1.5px;">Skills</h3>
+          <div style="border-bottom: 1.5px solid #d97706; margin-bottom: 8px;"></div>
+          <p style="margin: 0; font-size: 9.5pt; line-height: 1.5; color: #222;">${skillsList.join("  •  ")}</p>
+        `;
+        content.appendChild(section);
+      }
+
+      // Experience
+      if (r.experience && r.experience.length > 0) {
+        const section = document.createElement("div");
+        section.style.marginBottom = "16px";
+        let expHtml = `<h3 style="margin: 0 0 4px 0; font-size: 10pt; text-transform: uppercase; color: #d97706; letter-spacing: 1.5px;">Professional Experience</h3>
+          <div style="border-bottom: 1.5px solid #d97706; margin-bottom: 8px;"></div>`;
+        
+        r.experience.forEach(exp => {
+          let descHtml = "";
+          if (exp.description) {
+            const lines = exp.description.split("\\n").filter(l => l.trim()).map(line => `<li style="margin-bottom: 2px;">${line}</li>`).join("");
+            descHtml = `<ul style="margin: 0; padding-left: 18px; font-size: 9.5pt; line-height: 1.5; color: #333;">${lines}</ul>`;
+          }
+          expHtml += `
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px;">
+                <div>
+                  <strong style="font-size: 10pt; color: #2e2520;">${exp.role || ""}</strong>
+                  <span style="font-size: 9.5pt; color: #333;">${exp.company ? " — " + exp.company : ""}</span>
+                </div>
+                <em style="font-size: 9pt; color: #555;">${exp.duration || ""}</em>
+              </div>
+              ${descHtml}
+            </div>
+          `;
+        });
+        section.innerHTML = expHtml;
+        content.appendChild(section);
+      }
+
+      // Education
+      if (r.education && r.education.length > 0) {
+        const section = document.createElement("div");
+        section.style.marginBottom = "16px";
+        let eduHtml = `<h3 style="margin: 0 0 4px 0; font-size: 10pt; text-transform: uppercase; color: #d97706; letter-spacing: 1.5px;">Education</h3>
+          <div style="border-bottom: 1.5px solid #d97706; margin-bottom: 8px;"></div>`;
+        
+        r.education.forEach(edu => {
+          eduHtml += `
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+              <div>
+                <strong style="font-size: 10pt; color: #2e2520;">${edu.school || ""}</strong>
+                <span style="font-size: 9.5pt; color: #333;">${edu.degree ? " — " + edu.degree : ""}</span>
+              </div>
+              <span style="font-size: 9pt; color: #555;">${edu.year || ""}</span>
+            </div>
+          `;
+        });
+        section.innerHTML = eduHtml;
+        content.appendChild(section);
+      }
+
+      // Projects
+      if (r.projects && r.projects.length > 0) {
+        const section = document.createElement("div");
+        section.style.marginBottom = "12px";
+        let projHtml = `<h3 style="margin: 0 0 3px 0; font-size: 9.5pt; text-transform: uppercase; color: #d97706; letter-spacing: 1.2px;">Projects</h3>
+          <div style="border-bottom: 1.5px solid #d97706; margin-bottom: 6px;"></div>`;
+        
+        r.projects.forEach(proj => {
+          let descHtml = "";
+          if (proj.description) {
+            const lines = proj.description.split("\\n").filter(l => l.trim()).map(line => `<li style="margin-bottom: 1.5px;">${line}</li>`).join("");
+            descHtml = `<ul style="margin: 0; padding-left: 16px; font-size: 9pt; line-height: 1.35; color: #333;">${lines}</ul>`;
+          }
+          let linkHtml = "";
+          if (proj.link) {
+            linkHtml = `<div style="font-size: 8.5pt; color: #d97706; margin-bottom: 2px; font-weight: 500;">🔗 <a href="${proj.link.startsWith('http') ? proj.link : 'https://' + proj.link}" style="color: #d97706; text-decoration: underline;">${proj.link}</a></div>`;
+          }
+          
+          projHtml += `
+            <div style="margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                <div>
+                  <strong style="font-size: 9.5pt; color: #2e2520;">${proj.name || ""}</strong>
+                  <span style="font-size: 9pt; color: #444;">${proj.techStack ? " | " + proj.techStack : ""}</span>
+                </div>
+              </div>
+              ${linkHtml}
+              ${descHtml}
+            </div>
+          `;
+        });
+        section.innerHTML = projHtml;
+        content.appendChild(section);
+      }
+
+      // Extra
+      if (r.extra) {
+        const section = document.createElement("div");
+        section.innerHTML = `
+          <h3 style="margin: 0 0 4px 0; font-size: 10pt; text-transform: uppercase; color: #d97706; letter-spacing: 1.5px;">Additional Information</h3>
+          <div style="border-bottom: 1.5px solid #d97706; margin-bottom: 8px;"></div>
+          <p style="margin: 0; font-size: 9.5pt; line-height: 1.5; white-space: pre-wrap; color: #222;">${r.extra}</p>
+        `;
+        content.appendChild(section);
+      }
+
+      container.appendChild(content);
+      document.body.appendChild(container);
+
+      const opt = {
+        margin: 0,
+        filename: `${name.replace(/\s+/g, "_")}_Resume.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false, windowWidth: 794 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["avoid-all", "css"] },
+      };
+
+      // Construct a clean plain text representation of all resume data
+      const textParts = [];
+      if (r.userName || r.title) textParts.push(r.userName || r.title);
+      if (r.email) textParts.push(`Email: ${r.email}`);
+      if (r.phone) textParts.push(`Phone: ${r.phone}`);
+      if (r.linkedin) textParts.push(`LinkedIn: ${r.linkedin}`);
+      if (r.github) textParts.push(`GitHub: ${r.github}`);
+      if (r.summary) textParts.push(`Summary: ${r.summary}`);
+      if (skillsList.length > 0) textParts.push(`Skills: ${skillsList.join(", ")}`);
+
+      if (r.experience && r.experience.length > 0) {
+        textParts.push("Experience:");
+        r.experience.forEach((exp) => {
+          if (exp.company || exp.role) {
+            textParts.push(`${exp.role || ""} at ${exp.company || ""} (${exp.duration || ""})`);
+            if (exp.description) textParts.push(exp.description);
+          }
+        });
+      }
+
+      if (r.education && r.education.length > 0) {
+        textParts.push("Education:");
+        r.education.forEach((edu) => {
+          if (edu.school || edu.degree) {
+            textParts.push(`${edu.degree || ""} from ${edu.school || ""} (${edu.year || ""})`);
+          }
+        });
+      }
+
+      if (r.projects && r.projects.length > 0) {
+        textParts.push("Projects:");
+        r.projects.forEach((proj) => {
+          if (proj.name) {
+            textParts.push(`${proj.name || ""} - Tech: ${proj.techStack || ""}`);
+            if (proj.description) textParts.push(proj.description);
+          }
+        });
+      }
+
+      if (r.extra) textParts.push(r.extra);
+      const fullText = textParts.join("\n");
+
+      await html2pdf()
+        .set(opt)
+        .from(content)
+        .toPdf()
+        .get("pdf")
+        .then((pdf) => {
+          // Add invisible text layer on the first page
+          pdf.setPage(1);
+          pdf.setTextColor(255, 255, 255); // white text color
+          pdf.setFontSize(1); // 1 pt font size
+          
+          // Split text to fit width (180mm)
+          const splitText = pdf.splitTextToSize(fullText, 180);
+          pdf.text(splitText, 10, 10);
+        })
+        .save();
+      document.body.removeChild(container);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Please try again.");
+    }
   };
 
   const filteredResumes = resumes.filter((r) => {
@@ -344,7 +582,7 @@ export default function ResumesView({ resumes, setResumes, stats, token }) {
               <button onClick={() => handleDownloadJSON(previewResume)} className="btn-secondary" style={{ flex: 1, justifyContent: "center" }}>
                 <Download size={16} /> Download JSON
               </button>
-              <button onClick={() => handleDownloadPDFSim(previewResume)} className="glow-btn" style={{ flex: 1, justifyContent: "center" }}>
+              <button onClick={() => handleDownloadPDF(previewResume)} className="glow-btn" style={{ flex: 1, justifyContent: "center" }}>
                 <Download size={16} /> Download PDF
               </button>
             </div>
