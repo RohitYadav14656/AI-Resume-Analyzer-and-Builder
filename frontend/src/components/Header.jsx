@@ -1,6 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import WebsiteLogo from "./WebsiteLogo";
-import { Menu, X, Bell, LifeBuoy, Zap, Plus, User, LogIn, LogOut, FileText, Search, Home, ChevronDown } from "lucide-react";
+import {
+  Menu,
+  X,
+  Bell,
+  LifeBuoy,
+  Zap,
+  Plus,
+  User,
+  LogIn,
+  LogOut,
+  FileText,
+  Search,
+  Home,
+  ChevronDown,
+  Sparkles,
+} from "lucide-react";
 
 export default function Header({
   view,
@@ -14,6 +29,7 @@ export default function Header({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,6 +55,23 @@ export default function Header({
     };
   }, [mobileMenuOpen]);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    if (mobileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
+
   const handleNavClick = (to) => {
     setMobileMenuOpen(false);
     onNavigate(to);
@@ -58,20 +91,21 @@ export default function Header({
           gap: 0.75rem;
           width: 100%;
           padding: 0.75rem 1rem;
-          font-size: 0.95rem;
+          font-size: 0.92rem;
           font-weight: 600;
           color: var(--text-main);
           background: transparent;
           border: none;
-          border-radius: 12px;
+          border-radius: 14px;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           text-align: left;
         }
 
         .mobile-dropdown-item:hover, .mobile-dropdown-item.active {
-          background: rgba(217, 119, 6, 0.08);
+          background: rgba(217, 119, 6, 0.1);
           color: var(--accent);
+          transform: translateX(4px);
         }
 
         .mobile-dropdown-item.logout-item {
@@ -80,6 +114,7 @@ export default function Header({
 
         .mobile-dropdown-item.logout-item:hover {
           background: rgba(225, 29, 72, 0.08);
+          transform: translateX(4px);
         }
 
         .header-container {
@@ -244,43 +279,72 @@ export default function Header({
             )}
           </div>
 
-          {/* Mobile Screen Menu Button (Triggers Mobile Dropdown) */}
-          <div className="mobile-dropdown-trigger-box">
+          {/* Mobile Screen Dropdown Trigger Button */}
+          <div className="mobile-dropdown-trigger-box" ref={dropdownRef}>
             <button
               className="mobile-hamburger-btn"
               onClick={(e) => {
                 e.stopPropagation();
                 setMobileMenuOpen(!mobileMenuOpen);
               }}
-              aria-label={mobileMenuOpen ? "Close menu dropdown" : "Open menu dropdown"}
+              aria-label={mobileMenuOpen ? "Close mobile navigation menu" : "Open mobile navigation menu"}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "0.4rem",
-                padding: "0.5rem 0.95rem",
-                borderRadius: "14px",
-                background: "linear-gradient(135deg, #d97706, #b45309)",
+                gap: "0.45rem",
+                padding: "0.55rem 1rem",
+                borderRadius: "16px",
+                background: user
+                  ? "linear-gradient(135deg, #d97706, #b45309)"
+                  : "linear-gradient(135deg, #1e293b, #0f172a)",
                 color: "#ffffff",
                 border: "none",
                 fontWeight: 700,
                 fontSize: "0.88rem",
                 cursor: "pointer",
-                boxShadow: "0 3px 12px rgba(217, 119, 6, 0.35)"
+                boxShadow: user
+                  ? "0 4px 14px rgba(217, 119, 6, 0.35)"
+                  : "0 4px 14px rgba(15, 23, 42, 0.25)",
+                transition: "all 0.2s ease"
               }}
             >
               {user ? (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#ffffff", color: "#d97706", fontSize: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+                  <div style={{
+                    width: "26px",
+                    height: "26px",
+                    borderRadius: "50%",
+                    background: "#ffffff",
+                    color: "#d97706",
+                    fontSize: "0.78rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 800,
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
+                  }}>
                     {user.name ? user.name[0].toUpperCase() : "U"}
                   </div>
-                  <span>Menu</span>
-                  <ChevronDown size={15} style={{ transform: mobileMenuOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }} />
+                  <span>{user.name ? user.name.split(" ")[0] : "Account"}</span>
+                  <ChevronDown
+                    size={15}
+                    style={{
+                      transform: mobileMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.25s ease"
+                    }}
+                  />
                 </div>
               ) : (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
                   {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
                   <span>Menu</span>
-                  <ChevronDown size={15} style={{ transform: mobileMenuOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }} />
+                  <ChevronDown
+                    size={15}
+                    style={{
+                      transform: mobileMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.25s ease"
+                    }}
+                  />
                 </div>
               )}
             </button>
@@ -299,73 +363,74 @@ export default function Header({
             left: 0,
             right: 0,
             bottom: 0,
-            background: "rgba(15, 23, 42, 0.28)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
+            background: "rgba(15, 23, 42, 0.35)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
             zIndex: 99998,
           }}
         />
       )}
 
-      {/* ===== MOBILE SCREEN DROPDOWN PANEL ===== */}
+      {/* ===== MOBILE SCREEN USER DROPDOWN MENU PANEL ===== */}
       {mobileMenuOpen && (
         <div
           className="mobile-dropdown-container"
           onClick={(e) => e.stopPropagation()}
           style={{
             position: "fixed",
-            top: "64px",
-            left: "12px",
-            right: "12px",
+            top: "68px",
+            left: "14px",
+            right: "14px",
             maxWidth: "420px",
             margin: "0 auto",
             background: "rgba(255, 255, 255, 0.98)",
             backdropFilter: "blur(24px)",
             WebkitBackdropFilter: "blur(24px)",
             border: "1.5px solid rgba(217, 119, 6, 0.25)",
-            borderRadius: "22px",
-            boxShadow: "0 20px 50px -10px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(217, 119, 6, 0.1)",
-            padding: "1rem",
+            borderRadius: "24px",
+            boxShadow: "0 20px 60px -10px rgba(15, 23, 42, 0.25), 0 4px 20px rgba(217, 119, 6, 0.12)",
+            padding: "1.1rem",
             zIndex: 99999,
             animation: "headerDropdownSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
             overflowY: "auto",
-            maxHeight: "calc(90vh - 70px)",
+            maxHeight: "calc(90vh - 75px)",
           }}
         >
-          {/* Dropdown User Info Card */}
+          {/* Dropdown Logged-in User Profile Header Card */}
           {user && (
             <div style={{
               display: "flex",
               alignItems: "center",
               gap: "0.85rem",
-              padding: "0.85rem",
-              background: "linear-gradient(135deg, rgba(217, 119, 6, 0.08), rgba(245, 158, 11, 0.04))",
-              borderRadius: "14px",
-              marginBottom: "0.85rem",
-              border: "1px solid rgba(217, 119, 6, 0.18)"
+              padding: "0.9rem",
+              background: "linear-gradient(135deg, rgba(217, 119, 6, 0.09), rgba(245, 158, 11, 0.04))",
+              borderRadius: "16px",
+              marginBottom: "0.9rem",
+              border: "1px solid rgba(217, 119, 6, 0.2)"
             }}>
               <div style={{
-                width: "40px",
-                height: "40px",
+                width: "44px",
+                height: "44px",
                 borderRadius: "50%",
                 background: "linear-gradient(135deg, #d97706, #b45309)",
                 color: "white",
                 fontWeight: "800",
-                fontSize: "1.05rem",
+                fontSize: "1.1rem",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(217, 119, 6, 0.3)"
+                boxShadow: "0 4px 14px rgba(217, 119, 6, 0.35)",
+                flexShrink: 0
               }}>
                 {user.name ? user.name[0].toUpperCase() : "U"}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "var(--text-main)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <h4 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "var(--text-main)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {user.name}
                 </h4>
-                <span style={{ fontSize: "0.78rem", color: "var(--accent)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "0.25rem", marginTop: "2px" }}>
+                <span style={{ fontSize: "0.78rem", color: "var(--accent)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "0.25rem", marginTop: "3px" }}>
                   <Zap size={13} fill="var(--accent)" color="var(--accent)" />
-                  {user.aiCredits !== undefined ? user.aiCredits : 100} Credits
+                  {user.aiCredits !== undefined ? user.aiCredits : 100} AI Credits
                 </span>
               </div>
               <button
@@ -374,15 +439,16 @@ export default function Header({
                   onOpenBuyCredits && onOpenBuyCredits("credits");
                 }}
                 style={{
-                  padding: "0.4rem 0.75rem",
-                  fontSize: "0.78rem",
+                  padding: "0.45rem 0.85rem",
+                  fontSize: "0.8rem",
                   fontWeight: 700,
-                  borderRadius: "10px",
-                  background: "var(--accent)",
+                  borderRadius: "12px",
+                  background: "linear-gradient(135deg, #d97706, #b45309)",
                   color: "white",
                   border: "none",
                   cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(217, 119, 6, 0.3)"
+                  boxShadow: "0 3px 10px rgba(217, 119, 6, 0.35)",
+                  flexShrink: 0
                 }}
               >
                 + Buy
@@ -391,78 +457,116 @@ export default function Header({
           )}
 
           {/* Navigation Items inside Mobile Dropdown */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px", padding: "0.25rem 0.5rem 0.1rem" }}>
+              Explore Platform
+            </div>
+
             <button
               className={`mobile-dropdown-item ${view === "home" ? "active" : ""}`}
               onClick={() => handleNavClick("home")}
             >
-              <Home size={17} /> Home
+              <Home size={18} /> Home Overview
             </button>
             <button
               className={`mobile-dropdown-item ${view === "builder" ? "active" : ""}`}
               onClick={() => handleNavClick("builder")}
             >
-              <FileText size={17} /> Resume Builder
+              <FileText size={18} /> AI Resume Builder
             </button>
             <button
               className={`mobile-dropdown-item ${view === "analyzer" ? "active" : ""}`}
               onClick={() => handleNavClick("analyzer")}
             >
-              <Search size={17} /> AI Resume Analyzer
+              <Search size={18} /> ATS Resume Match & Analyzer
             </button>
 
             {user ? (
               <>
-                <div style={{ height: "1px", background: "var(--border)", margin: "0.35rem 0" }} />
+                <div style={{ height: "1px", background: "var(--border)", margin: "0.4rem 0" }} />
+                <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px", padding: "0.25rem 0.5rem 0.1rem" }}>
+                  Account & Services
+                </div>
+
                 <button
                   className={`mobile-dropdown-item ${view === "profile" ? "active" : ""}`}
                   onClick={() => handleNavClick("profile")}
                 >
-                  <User size={17} /> My Profile & Resumes
+                  <User size={18} /> My Profile & Resumes
                 </button>
                 <button
                   className="mobile-dropdown-item"
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    onOpenNotifications();
+                    onOpenNotifications && onOpenNotifications();
                   }}
                 >
-                  <Bell size={17} /> Notifications & Announcements
+                  <Bell size={18} /> Notifications & Announcements
                 </button>
                 <button
                   className="mobile-dropdown-item"
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    onOpenSupport();
+                    onOpenSupport && onOpenSupport();
                   }}
                 >
-                  <LifeBuoy size={17} /> Help Desk & Support
+                  <LifeBuoy size={18} /> Help Desk & Support
                 </button>
+
+                <div style={{ height: "1px", background: "var(--border)", margin: "0.4rem 0" }} />
+
                 <button
                   className="mobile-dropdown-item logout-item"
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    onLogout();
+                    onLogout && onLogout();
                   }}
                 >
-                  <LogOut size={17} /> Sign Out
+                  <LogOut size={18} /> Sign Out of Account
                 </button>
               </>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.5rem", paddingTop: "0.5rem", borderTop: "1px solid var(--border)" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginTop: "0.6rem", paddingTop: "0.6rem", borderTop: "1px solid var(--border)" }}>
                 <button
                   className="mobile-login-btn"
                   onClick={() => handleNavClick("login")}
-                  style={{ padding: "0.7rem 1rem", fontSize: "0.9rem", fontWeight: 700, borderRadius: "12px", background: "rgba(217, 119, 6, 0.1)", color: "var(--accent)", border: "1px solid rgba(217, 119, 6, 0.25)", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", cursor: "pointer" }}
+                  style={{
+                    padding: "0.75rem 1rem",
+                    fontSize: "0.92rem",
+                    fontWeight: 700,
+                    borderRadius: "14px",
+                    background: "rgba(217, 119, 6, 0.1)",
+                    color: "var(--accent)",
+                    border: "1px solid rgba(217, 119, 6, 0.25)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.5rem",
+                    cursor: "pointer"
+                  }}
                 >
-                  <LogIn size={17} /> Log In / Register
+                  <LogIn size={18} /> Log In / Register
                 </button>
                 <button
                   className="mobile-start-btn"
                   onClick={() => handleNavClick("builder")}
-                  style={{ padding: "0.75rem 1rem", fontSize: "0.9rem", fontWeight: 700, borderRadius: "12px", background: "linear-gradient(135deg, #d97706, #b45309)", color: "white", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(217, 119, 6, 0.3)" }}
+                  style={{
+                    padding: "0.8rem 1rem",
+                    fontSize: "0.92rem",
+                    fontWeight: 700,
+                    borderRadius: "14px",
+                    background: "linear-gradient(135deg, #d97706, #b45309)",
+                    color: "white",
+                    border: "none",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 16px rgba(217, 119, 6, 0.35)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.4rem"
+                  }}
                 >
-                  Build Resume Free →
+                  <Sparkles size={18} /> Build Resume Free →
                 </button>
               </div>
             )}
