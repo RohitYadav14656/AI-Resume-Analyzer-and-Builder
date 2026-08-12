@@ -403,7 +403,6 @@ export default function Header({
           {/* Mobile Screen Dropdown Trigger Button */}
           <div className="mobile-dropdown-trigger-box" ref={mobileDropdownRef}>
             <button
-              className="mobile-hamburger-btn"
               onClick={(e) => {
                 e.stopPropagation();
                 setMobileMenuOpen(!mobileMenuOpen);
