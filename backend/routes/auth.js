@@ -285,7 +285,8 @@ router.post("/admin-request-otp", async (req, res, next) => {
     const is2FAActive = config?.admin2FAEnabled !== false;
 
     if (!is2FAActive) {
-      const token = generateAccessToken(adminUser._id, adminUser.role);
+      const fingerprint = computeFingerprint(req.headers["user-agent"]);
+      const token = generateAccessToken(adminUser._id, fingerprint);
       return res.json({
         success: true,
         requiresOtp: false,
@@ -370,7 +371,8 @@ router.post("/admin-verify-otp", async (req, res, next) => {
       });
     }
 
-    const token = generateAccessToken(adminUser._id, adminUser.role);
+    const fingerprint = computeFingerprint(req.headers["user-agent"]);
+    const token = generateAccessToken(adminUser._id, fingerprint);
     const userObj = {
       id: adminUser._id,
       name: adminUser.name,

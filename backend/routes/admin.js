@@ -10,7 +10,7 @@ const SystemConfig = require("../models/SystemConfig");
 const AppError = require("../utils/AppError");
 const auth = require("../middleware/auth");
 const adminMiddleware = require("../middleware/adminMiddleware");
-const { generateAccessToken } = require("../utils/tokenUtils");
+const { generateAccessToken, computeFingerprint } = require("../utils/tokenUtils");
 
 const router = express.Router();
 
@@ -219,12 +219,8 @@ router.post("/users/:id/impersonate", async (req, res, next) => {
     const targetUser = await User.findById(req.params.id);
     if (!targetUser) throw new AppError("Target user not found", 404);
 
-    const impersonationToken = generateAccessToken({
-      userId: targetUser._id,
-      email: targetUser.email,
-      role: targetUser.role,
-      impersonatedBy: req.user.email,
-    });
+    const fingerprint = computeFingerprint(req.headers["user-agent"]);
+    const impersonationToken = generateAccessToken(targetUser._id, fingerprint);
 
     await AuditLog.create({
       category: "security",
