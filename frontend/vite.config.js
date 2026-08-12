@@ -19,10 +19,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("node_modules/three") || id.includes("node_modules/@react-three")) {
+          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/") || id.includes("node_modules/react-hot-toast/")) {
+            return "react-vendor";
+          }
+          if (id.includes("node_modules/three/") || id.includes("node_modules/@react-three/")) {
             return "three-vendor";
           }
-          if (id.includes("node_modules/framer-motion") || id.includes("node_modules/@rive-app")) {
+          if (id.includes("node_modules/framer-motion/") || id.includes("node_modules/@rive-app/") || id.includes("node_modules/@lottiefiles/") || id.includes("node_modules/@splinetool/")) {
             return "animation-vendor";
           }
         },

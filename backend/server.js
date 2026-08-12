@@ -9,6 +9,7 @@ const fs = require("fs");
 const cookieParser = require("cookie-parser");
 const mongoSanitize = require("express-mongo-sanitize");
 const bcrypt = require("bcryptjs");
+const compression = require("compression");
 
 const User = require("./models/User");
 const resumeRoutes = require("./routes/resume");
@@ -110,6 +111,7 @@ app.use(
   })
 );
 
+app.use(compression());
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
