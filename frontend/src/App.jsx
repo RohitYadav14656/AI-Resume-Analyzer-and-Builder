@@ -215,7 +215,7 @@ export default function App() {
 
   const navigate = (to) => {
     setMobileMenuOpen(false);
-    if ((to === "builder" || to === "analyzer" || to === "profile") && !user) {
+    if ((to === "builder" || to === "analyzer" || to === "profile") && !isAuthenticated) {
       setRedirectTarget(to);
       setView("login");
     } else {
