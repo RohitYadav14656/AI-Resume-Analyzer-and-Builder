@@ -2994,7 +2994,7 @@ button.secondary:hover::after {
 
 /* Hide Mobile Drawer Button Unconditionally */
 .mobile-hamburger-btn {
-  display: none !important;
+  display: block !important;
 }
 
 .footer-grid {
