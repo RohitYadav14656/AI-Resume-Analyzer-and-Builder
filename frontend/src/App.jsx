@@ -12,7 +12,7 @@ const ResumeAnalyzer = lazy(() => import("./pages/ResumeAnalyzer"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Profile = lazy(() => import("./pages/Profile"));
-const ResumeScene3D = lazy(() => import("./components/ResumeScene3D"));
+const HeroMockup = lazy(() => import("./components/HeroMockup"));
 const RiveCTA = lazy(() => import("./components/RiveCTA"));
 const NotificationCenterModal = lazy(() => import("./components/NotificationCenterModal"));
 const SupportTicketsModal = lazy(() => import("./components/SupportTicketsModal"));
@@ -537,7 +537,7 @@ function HeroPage({ navigate }) {
                   <LottieIcon type="spinner" width={48} height={48} />
                 </div>
               }>
-                <ResumeScene3D />
+                <HeroMockup />
               </Suspense>
             </div>
           </motion.div>
