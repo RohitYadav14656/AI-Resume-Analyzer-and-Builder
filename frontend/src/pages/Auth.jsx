@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LottieIcon from "../components/LottieIcon";
 import WebsiteLogo from "../components/WebsiteLogo";
 import { toast } from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Auth({ onAuthSuccess, initialTab = "login" }) {
   const [isLogin, setIsLogin] = useState(initialTab === "login");
@@ -238,7 +239,7 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: "32px", margin: "0 auto 1rem",
               border: "1px solid rgba(217,119,6,0.2)",
-            }}>✉️</div>
+            }}></div>
             <h2 style={{ fontSize: "1.6rem", marginBottom: "0.5rem" }}>Check your inbox</h2>
             <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", lineHeight: "1.7" }}>
               We sent a verification link to<br />
@@ -294,7 +295,7 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
                   gap: "0.5rem",
                 }}
               >
-                ✅ {resendSuccess}
+                 {resendSuccess}
               </motion.div>
             )}
           </AnimatePresence>
@@ -430,7 +431,7 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
               </button>
 
               <div style={{ textAlign: "center", marginBottom: "1.75rem" }}>
-                <div style={{ width: "52px", height: "52px", background: "linear-gradient(135deg,rgba(124,58,237,0.12),rgba(79,70,229,0.12))", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", margin: "0 auto 1rem" }}>🔐</div>
+                <div style={{ width: "52px", height: "52px", background: "linear-gradient(135deg,rgba(124,58,237,0.12),rgba(79,70,229,0.12))", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", margin: "0 auto 1rem" }}></div>
                 <h2 style={{ fontSize: "1.6rem", marginBottom: "0.4rem" }}>Forgot Password?</h2>
                 <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", lineHeight: "1.6" }}>
                   Enter your email and we'll send a secure reset link.
@@ -441,12 +442,12 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
                 {forgotError && (
                   <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     style={{ background: "rgba(225,29,72,0.1)", color: "var(--danger)", padding: "0.75rem 1rem", borderRadius: "10px", fontSize: "0.875rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem", border: "1px solid rgba(225,29,72,0.2)" }}
-                  >⚠️ {forgotError}</motion.div>
+                  > {forgotError}</motion.div>
                 )}
                 {forgotSuccess && (
                   <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     style={{ background: "rgba(16,185,129,0.08)", color: "#10b981", padding: "0.75rem 1rem", borderRadius: "10px", fontSize: "0.875rem", marginBottom: "1.25rem", display: "flex", alignItems: "flex-start", gap: "0.5rem", border: "1px solid rgba(16,185,129,0.2)" }}
-                  ><span>✅</span><span>{forgotSuccess}</span></motion.div>
+                  ><span></span><span>{forgotSuccess}</span></motion.div>
                 )}
               </AnimatePresence>
 
@@ -496,7 +497,7 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
                 {error && (
                   <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     style={{ background: "rgba(225,29,72,0.1)", color: "var(--danger)", padding: "0.75rem 1rem", borderRadius: "10px", fontSize: "0.875rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", border: "1px solid rgba(225,29,72,0.2)" }}
-                  >⚠️ {error}</motion.div>
+                  > {error}</motion.div>
                 )}
                 {success && (
                   <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -576,7 +577,7 @@ export default function Auth({ onAuthSuccess, initialTab = "login" }) {
                         lineHeight: 1
                       }}
                     >
-                      {showPassword ? "👁️" : "🙈"}
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 </div>

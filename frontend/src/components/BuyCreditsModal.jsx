@@ -127,8 +127,8 @@ export default function BuyCreditsModal({
 
               if (verifyData && verifyData.success) {
                 const msg = checkoutMode === "plan"
-                  ? `🎉 Payment Verified! Upgraded to ${selectedPlan.toUpperCase()} Plan (₹${totalPriceInr})!`
-                  : `🎉 Payment Verified! +${activeCredits} AI Credits added to your account.`;
+                  ? ` Payment Verified! Upgraded to ${selectedPlan.toUpperCase()} Plan (₹${totalPriceInr})!`
+                  : ` Payment Verified! +${activeCredits} AI Credits added to your account.`;
 
                 setSuccessMsg(msg);
                 if (onCreditsPurchased) {
@@ -152,6 +152,11 @@ export default function BuyCreditsModal({
           theme: {
             color: "#d97706",
           },
+          modal: {
+            ondismiss: function() {
+              setLoading(false);
+            }
+          }
         };
 
         const rzp = new window.Razorpay(options);
@@ -163,11 +168,11 @@ export default function BuyCreditsModal({
       } else {
         // Open FamPay / UPI QR Code & Payment Simulator Checkout Portal
         setActiveCheckoutOrder(orderData);
+        setLoading(false);
       }
     } catch (err) {
       const errMsg = err.response?.data?.error || err.response?.data?.message || err.message || "Payment order failed. Please try again.";
       setError(errMsg);
-    } finally {
       setLoading(false);
     }
   };
@@ -186,21 +191,17 @@ export default function BuyCreditsModal({
       const { data: verifyData } = await api.post("/api/user/verify-payment", verifyPayload);
 
       if (verifyData && verifyData.success) {
-        const msg = checkoutMode === "plan"
-          ? `🎉 Payment Successful! Account upgraded to ${selectedPlan.toUpperCase()} Plan (₹${totalPriceInr})!`
-          : `🎉 Payment Successful! +${activeCredits} AI Credits added to your account.`;
-
-        setSuccessMsg(msg);
+        setSuccessMsg(verifyData.message || "Payment submitted successfully.");
         setActiveCheckoutOrder(null);
 
-        if (onCreditsPurchased) {
+        if (!verifyData.pending && onCreditsPurchased) {
           onCreditsPurchased(verifyData.aiCredits, verifyData.subscription);
         }
 
         setTimeout(() => {
           setSuccessMsg("");
           onClose();
-        }, 2000);
+        }, 3000);
       }
     } catch (err) {
       const errMsg = err.response?.data?.error || err.response?.data?.message || err.message || "Verification failed.";
@@ -258,7 +259,7 @@ export default function BuyCreditsModal({
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
             <span style={{ fontSize: "1.3rem" }}>
-              {activeCheckoutOrder ? "📱" : checkoutMode === "plan" ? "💎" : "⚡"}
+              {activeCheckoutOrder ? "" : checkoutMode === "plan" ? "" : ""}
             </span>
             <div>
               <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#ffffff" }}>
@@ -295,7 +296,7 @@ export default function BuyCreditsModal({
               justifyContent: "center"
             }}
           >
-            ✕
+            
           </button>
         </div>
 
@@ -331,7 +332,7 @@ export default function BuyCreditsModal({
                   boxShadow: checkoutTab === "upi_qr" ? "0 2px 6px rgba(0,0,0,0.08)" : "none"
                 }}
               >
-                📱 FamPay & UPI QR
+                 FamPay & UPI QR
               </button>
               <button
                 type="button"
@@ -349,7 +350,7 @@ export default function BuyCreditsModal({
                   boxShadow: checkoutTab === "card" ? "0 2px 6px rgba(0,0,0,0.08)" : "none"
                 }}
               >
-                💳 Card Simulator
+                 Card Simulator
               </button>
               <button
                 type="button"
@@ -367,7 +368,7 @@ export default function BuyCreditsModal({
                   boxShadow: checkoutTab === "netbanking" ? "0 2px 6px rgba(0,0,0,0.08)" : "none"
                 }}
               >
-                🏦 NetBanking
+                 NetBanking
               </button>
               <button
                 type="button"
@@ -385,7 +386,7 @@ export default function BuyCreditsModal({
                   boxShadow: checkoutTab === "instant" ? "0 2px 6px rgba(0,0,0,0.08)" : "none"
                 }}
               >
-                ⚡ 1-Click Pay
+                 1-Click Pay
               </button>
             </div>
 
@@ -474,7 +475,7 @@ export default function BuyCreditsModal({
                         cursor: "pointer"
                       }}
                     >
-                      {copiedUpi ? "Copied!" : "📋 Copy"}
+                      {copiedUpi ? "Copied!" : " Copy"}
                     </button>
                   </div>
 
@@ -504,7 +505,7 @@ export default function BuyCreditsModal({
                     border: "1px solid #a7f3d0"
                   }}
                 >
-                  📱 Click here to open FamPay / UPI App directly
+                   Click here to open FamPay / UPI App directly
                 </a>
 
                 {/* UTR Input & Action */}
@@ -545,7 +546,7 @@ export default function BuyCreditsModal({
                       boxShadow: "0 4px 15px rgba(5, 150, 105, 0.3)"
                     }}
                   >
-                    {verifyingPayment ? "Verifying Payment..." : `✅ I Have Paid ₹${activeCheckoutOrder.amountInr} — Unlock Credits Now`}
+                    {verifyingPayment ? "Verifying Payment..." : ` I Have Paid ₹${activeCheckoutOrder.amountInr} — Unlock Credits Now`}
                   </button>
                 </div>
               </div>
@@ -555,7 +556,7 @@ export default function BuyCreditsModal({
             {checkoutTab === "card" && (
               <div style={{ background: "var(--surface-2)", padding: "1.25rem", borderRadius: "14px", border: "1px solid var(--border)" }}>
                 <h4 style={{ margin: "0 0 1rem 0", fontSize: "1rem", color: "var(--primary)", fontWeight: 800 }}>
-                  💳 Debit / Credit Card Payment Simulator
+                   Debit / Credit Card Payment Simulator
                 </h4>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem", marginBottom: "1.25rem" }}>
                   <div>
@@ -615,7 +616,7 @@ export default function BuyCreditsModal({
 
                 <button
                   type="button"
-                  onClick={() => handleVerifyCheckout("CARD_SIMULATED")}
+                  onClick={() => handleVerifyCheckout("000000000001")}
                   disabled={verifyingPayment}
                   style={{
                     width: "100%",
@@ -638,7 +639,7 @@ export default function BuyCreditsModal({
             {checkoutTab === "netbanking" && (
               <div style={{ background: "var(--surface-2)", padding: "1.25rem", borderRadius: "14px", border: "1px solid var(--border)" }}>
                 <h4 style={{ margin: "0 0 1rem 0", fontSize: "1rem", color: "var(--primary)", fontWeight: 800 }}>
-                  🏦 NetBanking Bank Authorization
+                   NetBanking Bank Authorization
                 </h4>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1.25rem" }}>
                   {[
@@ -668,7 +669,7 @@ export default function BuyCreditsModal({
 
                 <button
                   type="button"
-                  onClick={() => handleVerifyCheckout(`BANK_${selectedBank.toUpperCase()}`)}
+                  onClick={() => handleVerifyCheckout("000000000002")}
                   disabled={verifyingPayment}
                   style={{
                     width: "100%",
@@ -690,7 +691,7 @@ export default function BuyCreditsModal({
             {/* TAB 4: Instant One-Click Pay */}
             {checkoutTab === "instant" && (
               <div style={{ background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)", padding: "1.5rem", borderRadius: "14px", border: "1px solid #bae6fd", textAlign: "center" }}>
-                <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>⚡</div>
+                <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}></div>
                 <h4 style={{ margin: "0 0 0.5rem 0", fontSize: "1.1rem", color: "#0369a1", fontWeight: 800 }}>
                   Instant One-Click Unlock Mode
                 </h4>
@@ -699,7 +700,7 @@ export default function BuyCreditsModal({
                 </p>
                 <button
                   type="button"
-                  onClick={() => handleVerifyCheckout("INSTANT_DIRECT")}
+                  onClick={() => handleVerifyCheckout("000000000003")}
                   disabled={verifyingPayment}
                   style={{
                     width: "100%",
@@ -714,7 +715,7 @@ export default function BuyCreditsModal({
                     boxShadow: "0 4px 15px rgba(2, 132, 199, 0.3)"
                   }}
                 >
-                  {verifyingPayment ? "Granting Access..." : `🚀 Instant Unlock (₹${activeCheckoutOrder.amountInr})`}
+                  {verifyingPayment ? "Granting Access..." : ` Instant Unlock (₹${activeCheckoutOrder.amountInr})`}
                 </button>
               </div>
             )}
@@ -737,7 +738,7 @@ export default function BuyCreditsModal({
                   cursor: "pointer"
                 }}
               >
-                💎 Subscription Plans (Pro / Enterprise)
+                 Subscription Plans (Pro / Enterprise)
               </button>
               <button
                 onClick={() => setCheckoutMode("credits")}
@@ -752,7 +753,7 @@ export default function BuyCreditsModal({
                   cursor: "pointer"
                 }}
               >
-                ⚡ Token Credit Packs (Top-Up)
+                 Token Credit Packs (Top-Up)
               </button>
             </div>
 
@@ -770,7 +771,7 @@ export default function BuyCreditsModal({
               )}
 
               {checkoutMode === "plan" ? (
-                /* 💎 Subscription Plan Selection */
+                /*  Subscription Plan Selection */
                 <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                   <div style={{ fontSize: "0.88rem", color: "var(--text-muted)" }}>
                     Select your preferred membership tier to activate instant privileges and bonus credits:
@@ -833,7 +834,7 @@ export default function BuyCreditsModal({
                   {/* Payment Options Banner */}
                   <div style={{ background: "rgba(16, 185, 129, 0.08)", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid rgba(16, 185, 129, 0.2)" }}>
                     <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#065f46", marginBottom: "3px" }}>
-                      📱 Supports FamPay (@fam) & All Indian UPI Apps
+                       Supports FamPay (@fam) & All Indian UPI Apps
                     </div>
                     <div style={{ fontSize: "0.76rem", color: "#047857" }}>
                       Scan QR code via FamPay, Google Pay, PhonePe, Paytm, BHIM, or use card/bank simulator.
@@ -841,7 +842,7 @@ export default function BuyCreditsModal({
                   </div>
                 </div>
               ) : (
-                /* ⚡ Credit Packs Selection */
+                /*  Credit Packs Selection */
                 <div>
                   {/* Pricing Info Banner */}
                   <div style={{
@@ -855,7 +856,7 @@ export default function BuyCreditsModal({
                     justifyContent: "space-between"
                   }}>
                     <span style={{ fontSize: "0.85rem", color: "var(--primary)", fontWeight: 600 }}>
-                      🏷️ Rate: <strong>₹{pricePerCreditInr} / AI Credit</strong>
+                       Rate: <strong>₹{pricePerCreditInr} / AI Credit</strong>
                     </span>
                     <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
                       FamPay (@fam) • GPay • PhonePe • Paytm • Cards
@@ -882,7 +883,7 @@ export default function BuyCreditsModal({
                           transition: "all 0.2s ease"
                         }}
                       >
-                        <div style={{ fontSize: "1.2rem", marginBottom: "0.2rem" }}>📦</div>
+                        <div style={{ fontSize: "1.2rem", marginBottom: "0.2rem" }}></div>
                         <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "var(--primary)" }}>50</div>
                         <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.4rem" }}>Credits</div>
                         <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--accent)" }}>
@@ -919,7 +920,7 @@ export default function BuyCreditsModal({
                         }}>
                           POPULAR
                         </span>
-                        <div style={{ fontSize: "1.2rem", marginBottom: "0.2rem" }}>🚀</div>
+                        <div style={{ fontSize: "1.2rem", marginBottom: "0.2rem" }}></div>
                         <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "var(--primary)" }}>150</div>
                         <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.4rem" }}>Credits</div>
                         <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--accent)" }}>
@@ -940,7 +941,7 @@ export default function BuyCreditsModal({
                           transition: "all 0.2s ease"
                         }}
                       >
-                        <div style={{ fontSize: "1.2rem", marginBottom: "0.2rem" }}>⚡</div>
+                        <div style={{ fontSize: "1.2rem", marginBottom: "0.2rem" }}></div>
                         <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "var(--primary)" }}>500</div>
                         <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.4rem" }}>Credits</div>
                         <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--accent)" }}>

@@ -2,8 +2,8 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_for_development";
-const ACCESS_TOKEN_EXPIRY = "7h";
-const REFRESH_TOKEN_EXPIRY_MS = 7 * 60 * 60 * 1000;
+const ACCESS_TOKEN_EXPIRY = "1h";
+const REFRESH_TOKEN_EXPIRY_MS = 1 * 60 * 60 * 1000;
 
 /**
  * Generate a short-lived JWT access token.

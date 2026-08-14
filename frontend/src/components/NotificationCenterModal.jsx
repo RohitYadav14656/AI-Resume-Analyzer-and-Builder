@@ -62,7 +62,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
           background: "var(--surface-2)"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "1.2rem" }}>🔔</span>
+            <span style={{ fontSize: "1.2rem" }}></span>
             <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--primary)" }}>
               Notifications & Announcements
             </h3>
@@ -79,7 +79,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
               borderRadius: "6px"
             }}
           >
-            ✕
+            
           </button>
         </div>
 
@@ -95,7 +95,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
             </div>
           ) : announcements.length === 0 ? (
             <div style={{ textAlign: "center", padding: "3rem 1rem", color: "var(--text-muted)" }}>
-              <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>🔕</div>
+              <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}></div>
               <p style={{ fontWeight: 600, margin: 0 }}>No active announcements</p>
               <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>You are all caught up with system updates.</p>
             </div>

@@ -27,7 +27,7 @@ export default function MaintenanceScreen({ notice }) {
         fontSize: "2.5rem",
         marginBottom: "1.5rem"
       }}>
-        🛠️
+        
       </div>
 
       <h1 style={{ fontSize: "2rem", fontWeight: 800, marginBottom: "0.75rem", color: "#ffffff" }}>

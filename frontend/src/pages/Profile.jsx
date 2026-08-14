@@ -115,6 +115,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
     confirmPassword: "",
   });
   const [passwordError, setPasswordError] = useState("");
+  const [showPasswords, setShowPasswords] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   // Preset avatar styles
@@ -501,7 +502,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                 fontSize: "0.8rem",
               }}
             >
-              ✕
+              
             </button>
           </motion.div>
         )}
@@ -608,8 +609,8 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                 }}
               >
                 {profile.isOnline || (profile.lastActiveAt && Date.now() - new Date(profile.lastActiveAt).getTime() < 5 * 60 * 1000)
-                  ? "🟢 Online Now"
-                  : "⚪ Offline"}
+                  ? " Online Now"
+                  : " Offline"}
               </span>
               <span
                 style={{
@@ -625,7 +626,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                   textTransform: "uppercase"
                 }}
               >
-                ✨ {profile.subscription || user?.subscription || "Free"} Plan
+                 {profile.subscription || user?.subscription || "Free"} Plan
               </span>
               <span
                 style={{
@@ -640,7 +641,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                   gap: "0.3rem",
                 }}
               >
-                ⚡ {profile.aiCredits !== undefined ? profile.aiCredits : (user?.aiCredits ?? 100)} AI Credits
+                 {profile.aiCredits !== undefined ? profile.aiCredits : (user?.aiCredits ?? 100)} AI Credits
               </span>
               {onOpenBuyCredits && (
                 <button
@@ -659,7 +660,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                     gap: "0.3rem"
                   }}
                 >
-                  ➕ Buy Credits
+                   Buy Credits
                 </button>
               )}
             </div>
@@ -670,10 +671,10 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
 
             <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", fontSize: "0.875rem", color: "var(--text-muted)", marginTop: "0.5rem", alignItems: "center" }}>
               <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                🎓 {profile.university || "University Student"}
+                 {profile.university || "University Student"}
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                ✉️ {profile.email}
+                 {profile.email}
               </span>
               {profile.linkedin ? (
                 <a
@@ -682,7 +683,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                   rel="noopener noreferrer"
                   style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "#0a66c2", textDecoration: "none", fontWeight: 700 }}
                 >
-                  🔗 LinkedIn
+                   LinkedIn
                 </a>
               ) : (
                 <span
@@ -690,7 +691,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                   style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "var(--text-light)", cursor: "pointer" }}
                   title="Click to add LinkedIn URL"
                 >
-                  🔗 + Add LinkedIn
+                   + Add LinkedIn
                 </span>
               )}
               {profile.github ? (
@@ -700,7 +701,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                   rel="noopener noreferrer"
                   style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "var(--text-main)", textDecoration: "none", fontWeight: 700 }}
                 >
-                  💻 GitHub
+                   GitHub
                 </a>
               ) : (
                 <span
@@ -708,17 +709,17 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                   style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", color: "var(--text-light)", cursor: "pointer" }}
                   title="Click to add GitHub URL"
                 >
-                  💻 + Add GitHub
+                   + Add GitHub
                 </span>
               )}
               <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }} title={`Signed up on ${formatDate(profile.createdAt)}`}>
-                ✍️ Joined {formatDate(profile.createdAt)}
+                 Joined {formatDate(profile.createdAt)}
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }} title={`First login: ${formatDate(profile.firstLogin || profile.createdAt)}`}>
-                🔑 First Login: {formatDate(profile.firstLogin || profile.createdAt)}
+                 First Login: {formatDate(profile.firstLogin || profile.createdAt)}
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: "0.35rem" }} title={`Last login: ${formatDate(profile.lastLogin || profile.createdAt)}`}>
-                🕒 Last Active: {formatTimeAgo(profile.lastLogin || profile.createdAt)}
+                 Last Active: {formatTimeAgo(profile.lastLogin || profile.createdAt)}
               </span>
             </div>
           </div>
@@ -759,7 +760,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                   cursor: "pointer"
                 }}
               >
-                🎫 Support & Tickets
+                 Support & Tickets
               </button>
             )}
           </div>
@@ -772,7 +773,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
               Profile Completion: <span style={{ color: "var(--accent)" }}>{profileCompletion}%</span>
             </span>
             <span className="profile-completion-badge">
-              {profileCompletion >= 90 ? "🚀 High AI accuracy" : "💡 Complete to unlock personalized suggestions"}
+              {profileCompletion >= 90 ? " High AI accuracy" : " Complete to unlock personalized suggestions"}
             </span>
           </div>
 
@@ -808,7 +809,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
       {/* ── 2. PROFILE STATISTICS ── */}
       <div style={{ marginBottom: "2.5rem" }}>
         <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          📊 Resume & Activity Dashboard
+           Resume & Activity Dashboard
         </h2>
 
         <div
@@ -922,7 +923,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "1rem" }}>
           <div>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              💳 Membership Plans & Token Purchase
+               Membership Plans & Token Purchase
             </h2>
             <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "2px" }}>
               Choose your membership tier or top up AI tokens when you run low. (Initial signup: {pricingConfig.initialSignupCredits} credits • Daily login bonus: {pricingConfig.dailyBonusCredits} credits)
@@ -946,7 +947,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                 boxShadow: "0 4px 14px rgba(217, 119, 6, 0.3)",
               }}
             >
-              ⚡ Buy Additional Tokens (₹{pricingConfig.pricePerCreditInr}/credit)
+               Buy Additional Tokens (₹{pricingConfig.pricePerCreditInr}/credit)
             </button>
           )}
         </div>
@@ -1015,7 +1016,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
             }}
           >
             <span style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #10b981, #059669)", color: "#ffffff", fontSize: "0.72rem", fontWeight: 800, padding: "0.25rem 0.8rem", borderRadius: "12px", boxShadow: "0 2px 8px rgba(16,185,129,0.3)" }}>
-              ⭐ POPULAR PRO TIER
+               POPULAR PRO TIER
             </span>
             <div>
               <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "var(--text-main)", marginBottom: "0.25rem", marginTop: "0.5rem" }}>Pro User</div>
@@ -1135,23 +1136,23 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
 
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.6rem", fontSize: "0.875rem", color: "var(--text-muted)" }}>
                 <li style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem" }}>
-                  <span style={{ color: "var(--accent)", fontWeight: 700 }}>⚡</span>
+                  <span style={{ color: "var(--accent)", fontWeight: 700 }}></span>
                   <span><strong>Faster resume creation</strong> — auto-fills student details</span>
                 </li>
                 <li style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem" }}>
-                  <span style={{ color: "var(--accent)", fontWeight: 700 }}>🤖</span>
+                  <span style={{ color: "var(--accent)", fontWeight: 700 }}></span>
                   <span><strong>Better AI recommendations</strong> — tailored skill suggestions</span>
                 </li>
                 <li style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem" }}>
-                  <span style={{ color: "var(--accent)", fontWeight: 700 }}>📝</span>
+                  <span style={{ color: "var(--accent)", fontWeight: 700 }}></span>
                   <span><strong>Personalized resume summaries</strong> — targeted objective statements</span>
                 </li>
                 <li style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem" }}>
-                  <span style={{ color: "var(--accent)", fontWeight: 700 }}>🎯</span>
+                  <span style={{ color: "var(--accent)", fontWeight: 700 }}></span>
                   <span><strong>Improved ATS optimization</strong> — targeted keyword matching</span>
                 </li>
                 <li style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem" }}>
-                  <span style={{ color: "var(--accent)", fontWeight: 700 }}>🔄</span>
+                  <span style={{ color: "var(--accent)", fontWeight: 700 }}></span>
                   <span><strong>No need to enter the same information repeatedly</strong></span>
                 </li>
               </ul>
@@ -1289,7 +1290,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.75rem" }}>
           <div>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              📄 Saved Resumes ({savedResumes.length})
+               Saved Resumes ({savedResumes.length})
             </h2>
             <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
               Manage your created resumes, analyze ATS scores, or download ready PDFs.
@@ -1354,7 +1355,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                 boxShadow: "0 6px 20px var(--primary-glow)",
               }}
             >
-              🚀 Create Your First Resume
+               Create Your First Resume
             </button>
           </motion.div>
         ) : (
@@ -1418,7 +1419,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
                       alignItems: "center",
                       gap: "0.4rem"
                     }}>
-                      <span>⚠️</span>
+                      <span></span>
                       <span><strong>Flagged by Admin:</strong> {resume.flagReason || "Requires administrative review"}</span>
                     </div>
                   )}
@@ -1487,7 +1488,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
         {/* ── 6. RECENT ACTIVITY TIMELINE ── */}
         <div className="card glass-panel" style={{ padding: "1.75rem" }}>
           <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            ⏱️ Recent Activity
+             Recent Activity
           </h3>
 
           {recentActivity.length === 0 ? (
@@ -1545,7 +1546,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
         {/* ── 7. ACCOUNT SETTINGS TABS ── */}
         <div className="card glass-panel" style={{ padding: "1.75rem" }}>
           <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            ⚙️ Account Settings
+             Account Settings
           </h3>
 
           {/* Settings Tabs Bar */}
@@ -1685,7 +1686,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
                 <h3 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Edit Student Profile</h3>
-                <button onClick={() => setShowEditModal(false)} style={{ background: "none", color: "var(--text-muted)", padding: 0, boxShadow: "none" }}>✕</button>
+                <button onClick={() => setShowEditModal(false)} style={{ background: "none", color: "var(--text-muted)", padding: 0, boxShadow: "none" }}></button>
               </div>
 
               <form onSubmit={handleSaveProfile} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -1776,7 +1777,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
                 <h3 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Choose Profile Picture</h3>
-                <button onClick={() => setShowAvatarModal(false)} style={{ background: "none", color: "var(--text-muted)", padding: 0, boxShadow: "none" }}>✕</button>
+                <button onClick={() => setShowAvatarModal(false)} style={{ background: "none", color: "var(--text-muted)", padding: 0, boxShadow: "none" }}></button>
               </div>
 
               <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "1.25rem" }}>
@@ -1829,7 +1830,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
                 <h3 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Change Password</h3>
-                <button onClick={() => setShowPasswordModal(false)} style={{ background: "none", color: "var(--text-muted)", padding: 0, boxShadow: "none" }}>✕</button>
+                <button onClick={() => setShowPasswordModal(false)} style={{ background: "none", color: "var(--text-muted)", padding: 0, boxShadow: "none" }}></button>
               </div>
 
               {passwordError && (
@@ -1839,34 +1840,58 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
               )}
 
               <form onSubmit={handleChangePasswordSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <div className="form-group">
+                <div className="form-group" style={{ position: "relative" }}>
                   <label>Current Password</label>
                   <input
-                    type="password"
+                    type={showPasswords ? "text" : "password"}
                     value={passwordForm.currentPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                    style={{ paddingRight: "2.5rem" }}
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(!showPasswords)}
+                    style={{ position: "absolute", right: "10px", top: "35px", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}
+                  >
+                    {showPasswords ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
 
-                <div className="form-group">
+                <div className="form-group" style={{ position: "relative" }}>
                   <label>New Password (min 6 characters)</label>
                   <input
-                    type="password"
+                    type={showPasswords ? "text" : "password"}
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    style={{ paddingRight: "2.5rem" }}
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(!showPasswords)}
+                    style={{ position: "absolute", right: "10px", top: "35px", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}
+                  >
+                    {showPasswords ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
 
-                <div className="form-group">
+                <div className="form-group" style={{ position: "relative" }}>
                   <label>Confirm New Password</label>
                   <input
-                    type="password"
+                    type={showPasswords ? "text" : "password"}
                     value={passwordForm.confirmPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    style={{ paddingRight: "2.5rem" }}
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(!showPasswords)}
+                    style={{ position: "absolute", right: "10px", top: "35px", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}
+                  >
+                    {showPasswords ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
 
                 <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", marginTop: "1rem" }}>
@@ -1896,7 +1921,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
                 <h3 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Privacy & Student Data Commitment</h3>
-                <button onClick={() => setShowPrivacyModal(false)} style={{ background: "none", color: "var(--text-muted)", padding: 0, boxShadow: "none" }}>✕</button>
+                <button onClick={() => setShowPrivacyModal(false)} style={{ background: "none", color: "var(--text-muted)", padding: 0, boxShadow: "none" }}></button>
               </div>
 
               <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", lineHeight: "1.65", display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -1935,7 +1960,7 @@ export default function Profile({ user, setUser, navigate, setForm, handleLogout
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
                 <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--danger)" }}>Delete Account</h3>
-                <button onClick={() => setShowDeleteModal(false)} style={{ background: "none", color: "var(--text-muted)", padding: 0, boxShadow: "none" }}>✕</button>
+                <button onClick={() => setShowDeleteModal(false)} style={{ background: "none", color: "var(--text-muted)", padding: 0, boxShadow: "none" }}></button>
               </div>
 
               <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "1.25rem", lineHeight: "1.5" }}>

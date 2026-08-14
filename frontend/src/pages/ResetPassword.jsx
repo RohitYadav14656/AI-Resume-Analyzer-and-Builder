@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../api";
 import { motion, AnimatePresence } from "framer-motion";
 import LottieIcon from "../components/LottieIcon";
+import { Eye, EyeOff } from "lucide-react";
 
 /**
  * ResetPassword page
@@ -60,7 +61,7 @@ export default function ResetPassword({ token, onGoToLogin }) {
     if (passed === 0) return { level: 2, label: "Weak", color: "#f97316" };
     if (passed === 1) return { level: 3, label: "Fair", color: "#eab308" };
     if (passed === 2) return { level: 4, label: "Good", color: "#22c55e" };
-    return { level: 5, label: "Strong 💪", color: "#10b981" };
+    return { level: 5, label: "Strong ", color: "#10b981" };
   };
 
   const strength = getStrength(password);
@@ -91,7 +92,7 @@ export default function ResetPassword({ token, onGoToLogin }) {
               margin: "0 auto 1rem",
             }}
           >
-            {success ? "✅" : tokenMissing ? "⛔" : "🔑"}
+            {success ? "" : tokenMissing ? "" : ""}
           </div>
 
           <h2 style={{ fontSize: "1.65rem", marginBottom: "0.4rem" }}>
@@ -190,7 +191,7 @@ export default function ResetPassword({ token, onGoToLogin }) {
                     border: "1px solid rgba(225, 29, 72, 0.2)",
                   }}
                 >
-                  ⚠️ {error}
+                   {error}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -230,7 +231,7 @@ export default function ResetPassword({ token, onGoToLogin }) {
                     }}
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? "🙈" : "👁️"}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
 
@@ -291,7 +292,7 @@ export default function ResetPassword({ token, onGoToLogin }) {
                 )}
                 {confirmPassword && confirmPassword === password && (
                   <p style={{ fontSize: "0.75rem", color: "#10b981", marginTop: "4px", marginBottom: 0 }}>
-                    ✓ Passwords match
+                     Passwords match
                   </p>
                 )}
               </div>

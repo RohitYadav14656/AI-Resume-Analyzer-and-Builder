@@ -22,6 +22,7 @@ const SystemHealthView = lazy(() => import("./components/SystemHealthView"));
 const ReportsView = lazy(() => import("./components/ReportsView"));
 const SettingsView = lazy(() => import("./components/SettingsView"));
 const AdminLogin = lazy(() => import("./components/AdminLogin"));
+const PaymentsView = lazy(() => import("./components/PaymentsView"));
 
 const ViewLoader = () => (
   <div style={{ padding: "40px", display: "flex", justifyContent: "center", alignItems: "center", color: "var(--accent)" }}>
@@ -129,6 +130,7 @@ export default function App() {
     const socket = io(getApiBaseUrl(), {
       reconnectionAttempts: 5,
       timeout: 5000,
+      transports: ["websocket"],
     });
 
     socket.on("connect", () => {
@@ -231,7 +233,7 @@ export default function App() {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
     delete axios.defaults.headers.common["Authorization"];
-    toast("Logged out of Admin Portal", { icon: "🔒", id: "admin-logout" });
+    toast("Logged out of Admin Portal", { icon: "", id: "admin-logout" });
   };
 
   if (!token) {
@@ -357,6 +359,8 @@ export default function App() {
             {activeTab === "logs" && <LogsView token={token} />}
 
             {activeTab === "security" && <SecurityView token={token} />}
+
+            {activeTab === "payments" && <PaymentsView token={token} />}
 
             {activeTab === "health" && <SystemHealthView systemInfo={systemInfo} onRefresh={fetchData} token={token} />}
 

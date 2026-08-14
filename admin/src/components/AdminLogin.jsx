@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ShieldCheck, Lock, Mail, ArrowRight, AlertTriangle, Key, Smartphone, CheckCircle, RefreshCw } from "lucide-react";
+import { ShieldCheck, Lock, Mail, ArrowRight, AlertTriangle, Key, Smartphone, CheckCircle, RefreshCw, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import WebsiteLogo from "./WebsiteLogo";
@@ -11,6 +11,7 @@ export default function AdminLogin({ onLoginSuccess }) {
   const [otp, setOtp] = useState("");
   const [maskedPhone, setMaskedPhone] = useState("+91 7404714656");
   const [devOtp, setDevOtp] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -186,7 +187,7 @@ export default function AdminLogin({ onLoginSuccess }) {
               marginBottom: "10px"
             }}
           >
-            🛡️ Admin Control Center
+             Admin Control Center
           </div>
 
           <h1 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#ffffff", margin: 0 }}>
@@ -294,7 +295,7 @@ export default function AdminLogin({ onLoginSuccess }) {
               <div style={{ position: "relative" }}>
                 <Lock size={16} color="#a8a29e" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)" }} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   className="search-input"
                   placeholder="••••••••••••"
@@ -303,7 +304,7 @@ export default function AdminLogin({ onLoginSuccess }) {
                   style={{
                     width: "100%",
                     paddingLeft: "42px",
-                    paddingRight: "14px",
+                    paddingRight: "36px",
                     paddingTop: "12px",
                     paddingBottom: "12px",
                     borderRadius: "12px",
@@ -313,6 +314,26 @@ export default function AdminLogin({ onLoginSuccess }) {
                     fontSize: "0.92rem"
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "14px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#a8a29e",
+                    padding: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 

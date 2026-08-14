@@ -242,7 +242,7 @@ export default function ResumesView({ resumes, setResumes, stats, token }) {
           }
           let linkHtml = "";
           if (proj.link) {
-            linkHtml = `<div style="font-size: 8.5pt; color: #d97706; margin-bottom: 2px; font-weight: 500;">🔗 <a href="${proj.link.startsWith('http') ? proj.link : 'https://' + proj.link}" style="color: #d97706; text-decoration: underline;">${proj.link}</a></div>`;
+            linkHtml = `<div style="font-size: 8.5pt; color: #d97706; margin-bottom: 2px; font-weight: 500;"> <a href="${proj.link.startsWith('http') ? proj.link : 'https://' + proj.link}" style="color: #d97706; text-decoration: underline;">${proj.link}</a></div>`;
           }
           
           projHtml += `

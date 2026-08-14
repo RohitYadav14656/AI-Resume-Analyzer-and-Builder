@@ -7,6 +7,7 @@ const Ticket = require("../models/Ticket");
 const Announcement = require("../models/Announcement");
 const AILog = require("../models/AILog");
 const SystemConfig = require("../models/SystemConfig");
+const Transaction = require("../models/Transaction");
 const AppError = require("../utils/AppError");
 const auth = require("../middleware/auth");
 const adminMiddleware = require("../middleware/adminMiddleware");
@@ -943,6 +944,80 @@ router.get("/global-search", async (req, res, next) => {
         logs,
       },
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/transactions
+ */
+router.get("/transactions", async (req, res, next) => {
+  try {
+    const transactions = await Transaction.find()
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 });
+    res.json({ success: true, transactions });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/admin/transactions/:id/approve
+ */
+router.post("/transactions/:id/approve", async (req, res, next) => {
+  try {
+    const tx = await Transaction.findById(req.params.id).populate("userId");
+    if (!tx) throw new AppError("Transaction not found", 404);
+    if (tx.status !== "pending") throw new AppError(`Transaction is already ${tx.status}`, 400);
+
+    const user = await User.findById(tx.userId._id);
+    if (!user) throw new AppError("Associated user not found", 404);
+
+    if (tx.planRequested) {
+      user.subscription = tx.planRequested;
+      const extraCredits = tx.planRequested === "pro" ? 100 : 500;
+      user.aiCredits = (user.aiCredits || 0) + extraCredits;
+      user.recentActivity.unshift({
+        action: "Subscription Payment Verified",
+        description: `Admin approved payment (UTR: ${tx.referenceId}) for ${tx.planRequested.toUpperCase()} Plan — Received +${extraCredits} Bonus Credits!`,
+        timestamp: new Date(),
+      });
+    } else if (tx.creditsRequested) {
+      user.aiCredits = (user.aiCredits || 0) + tx.creditsRequested;
+      user.recentActivity.unshift({
+        action: "Payment Verified & Credits Added",
+        description: `Admin approved payment (UTR: ${tx.referenceId}) — Added +${tx.creditsRequested} AI Credits`,
+        timestamp: new Date(),
+      });
+    }
+
+    if (user.recentActivity.length > 25) user.recentActivity = user.recentActivity.slice(0, 25);
+    await user.save();
+
+    tx.status = "verified";
+    await tx.save();
+
+    res.json({ success: true, message: "Transaction approved and benefits granted.", transaction: tx });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/admin/transactions/:id/reject
+ */
+router.post("/transactions/:id/reject", async (req, res, next) => {
+  try {
+    const tx = await Transaction.findById(req.params.id);
+    if (!tx) throw new AppError("Transaction not found", 404);
+    if (tx.status !== "pending") throw new AppError(`Transaction is already ${tx.status}`, 400);
+
+    tx.status = "rejected";
+    await tx.save();
+
+    res.json({ success: true, message: "Transaction rejected.", transaction: tx });
   } catch (err) {
     next(err);
   }

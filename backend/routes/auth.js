@@ -605,8 +605,14 @@ router.post("/refresh", async (req, res, next) => {
       });
     }
 
-    await storedToken.deleteOne();
-    const accessToken = await issueTokens(res, user, req.headers["user-agent"]);
+    // Extend the refresh token session to 1 hour from now
+    storedToken.expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS);
+    await storedToken.save();
+
+    const fingerprint = computeFingerprint(req.headers["user-agent"]);
+    const accessToken = generateAccessToken(String(user._id), fingerprint);
+
+    res.cookie(REFRESH_COOKIE_NAME, rawToken, refreshCookieOptions());
 
     res.json({
       success: true,

@@ -57,7 +57,7 @@ function AISuggestionButton({ field, currentText, role, skills, onSelect }) {
           transform: "none",
         }}
       >
-        ✨ AI Suggest
+         AI Suggest
       </button>
 
       {show && (
@@ -79,14 +79,14 @@ function AISuggestionButton({ field, currentText, role, skills, onSelect }) {
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <span style={{ fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              ✨ AI Suggestions
+               AI Suggestions
             </span>
             <button
               type="button"
               onClick={() => setShow(false)}
               style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "var(--text-muted)", padding: 0 }}
             >
-              ✕
+              
             </button>
           </div>
 
@@ -194,7 +194,7 @@ function AIGrammarFixButton({ currentText, onSelect }) {
           transform: "none",
         }}
       >
-        ✨ Fix Grammar
+         Fix Grammar
       </button>
 
       {show && (
@@ -216,14 +216,14 @@ function AIGrammarFixButton({ currentText, onSelect }) {
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <span style={{ fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              ✨ Grammar & Spell Checker
+               Grammar & Spell Checker
             </span>
             <button
               type="button"
               onClick={() => setShow(false)}
               style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "var(--text-muted)", padding: 0 }}
             >
-              ✕
+              
             </button>
           </div>
 
@@ -245,7 +245,7 @@ function AIGrammarFixButton({ currentText, onSelect }) {
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {!result.hasErrors ? (
                 <div style={{ textAlign: "center", padding: "1.5rem 0" }}>
-                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🎉</div>
+                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}></div>
                   <div style={{ fontWeight: 600, color: "var(--text-main)", marginBottom: "0.25rem" }}>Looks Perfect!</div>
                   <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>No grammatical or spelling errors found.</div>
                 </div>
@@ -531,7 +531,7 @@ export default function ResumeBuilder({ form, setForm }) {
         }));
       }
       const fixes = res.data.improvements?.join("\n• ") || "Polished spelling, grammar, and action verbs!";
-      alert(`✨ Grammar & Tone Check Completed!\n\nImprovements applied:\n• ${fixes}`);
+      alert(` Grammar & Tone Check Completed!\n\nImprovements applied:\n• ${fixes}`);
     } catch (err) {
       console.error(err);
       alert("Grammar check failed. Please try again.");
@@ -580,7 +580,7 @@ export default function ResumeBuilder({ form, setForm }) {
           }}
           style={{ marginTop: "0.75rem", padding: "0.4rem 1rem", fontSize: "0.85rem", borderRadius: "999px" }}
         >
-          👁️ Check Resume ↓
+           Check Resume ↓
         </button>
       </div>
 
@@ -590,14 +590,14 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Mobile Section Nav Tabs */}
           <div className="mobile-section-nav">
             {[
-              { id: "all", label: "📋 All Sections" },
-              { id: "personal", label: "👤 Personal" },
-              { id: "summary", label: "📝 Summary" },
-              { id: "skills", label: "🛠️ Skills" },
-              { id: "experience", label: "💼 Experience" },
-              { id: "education", label: "🎓 Education" },
-              { id: "projects", label: "🚀 Projects" },
-              { id: "extra", label: "🏆 Extra" },
+              { id: "all", label: " All Sections" },
+              { id: "personal", label: " Personal" },
+              { id: "summary", label: " Summary" },
+              { id: "skills", label: " Skills" },
+              { id: "experience", label: " Experience" },
+              { id: "education", label: " Education" },
+              { id: "projects", label: " Projects" },
+              { id: "extra", label: " Extra" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -613,7 +613,7 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Contact Info */}
           {(mobileTab === "all" || mobileTab === "personal") && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <div className="section-chip">👤 Personal Info</div>
+              <div className="section-chip"> Personal Info</div>
               <div className="form-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Full Name</label>
@@ -642,7 +642,7 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Summary */}
           {(mobileTab === "all" || mobileTab === "summary") && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <div className="section-chip">📝 Summary</div>
+              <div className="section-chip"> Summary</div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
                   <label style={{ margin: 0 }}>Professional Summary</label>
@@ -667,7 +667,7 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Skills */}
           {(mobileTab === "all" || mobileTab === "skills") && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <div className="section-chip">🛠️ Skills</div>
+              <div className="section-chip"> Skills</div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
                   <label style={{ margin: 0 }}>Technical Skills (comma separated)</label>
@@ -686,7 +686,7 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Experience */}
           {(mobileTab === "all" || mobileTab === "experience") && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <div className="section-chip">💼 Experience</div>
+              <div className="section-chip"> Experience</div>
               {form.experience.map((exp, i) => (
                 <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
                   <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
@@ -710,7 +710,7 @@ export default function ResumeBuilder({ form, setForm }) {
                     </div>
                   </div>
                   <textarea placeholder="Description (each new line = a bullet point)" rows={3} value={exp.description} onChange={(e) => updateArrayField("experience", i, "description", e.target.value)} style={{ marginBottom: "0.5rem" }} />
-                  <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("experience", i)}>✕ Remove</button>
+                  <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("experience", i)}> Remove</button>
                 </div>
               ))}
               <button className="secondary" onClick={() => addRow("experience", emptyExperience)}>+ Add Experience</button>
@@ -720,7 +720,7 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Education */}
           {(mobileTab === "all" || mobileTab === "education") && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <div className="section-chip">🎓 Education</div>
+              <div className="section-chip"> Education</div>
               {form.education.map((edu, i) => (
                 <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
                   <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
@@ -728,7 +728,7 @@ export default function ResumeBuilder({ form, setForm }) {
                     <input placeholder="Degree" value={edu.degree} onChange={(e) => updateArrayField("education", i, "degree", e.target.value)} />
                   </div>
                   <input placeholder="Graduation Year (e.g. 2024)" style={{ marginBottom: "0.5rem" }} value={edu.year} onChange={(e) => updateArrayField("education", i, "year", e.target.value)} />
-                  <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("education", i)}>✕ Remove</button>
+                  <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("education", i)}> Remove</button>
                 </div>
               ))}
               <button className="secondary" onClick={() => addRow("education", emptyEducation)}>+ Add Education</button>
@@ -738,7 +738,7 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Projects */}
           {(mobileTab === "all" || mobileTab === "projects") && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <div className="section-chip">🚀 Projects</div>
+              <div className="section-chip"> Projects</div>
               {form.projects && form.projects.map((proj, i) => (
                 <div key={i} style={{ border: "1px solid var(--border)", padding: "1rem", borderRadius: "10px", background: "var(--surface-2)", marginBottom: "0.75rem" }}>
                   <div className="form-2col" style={{ marginBottom: "0.5rem" }}>
@@ -763,7 +763,7 @@ export default function ResumeBuilder({ form, setForm }) {
                     </div>
                   </div>
                   <textarea placeholder="Description (each line = bullet point)" rows={3} value={proj.description} onChange={(e) => updateArrayField("projects", i, "description", e.target.value)} style={{ marginBottom: "0.5rem" }} />
-                  <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("projects", i)}>✕ Remove</button>
+                  <button className="secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }} onClick={() => removeRow("projects", i)}> Remove</button>
                 </div>
               ))}
               <button className="secondary" onClick={() => addRow("projects", emptyProject)}>+ Add Project</button>
@@ -773,7 +773,7 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Extra */}
           {(mobileTab === "all" || mobileTab === "extra") && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <div className="section-chip">🏆 Extra</div>
+              <div className="section-chip"> Extra</div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.5rem" }}>
                   <label style={{ margin: 0 }}>Awards, Certifications, Languages, etc.</label>
@@ -799,10 +799,10 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Actions */}
           <div className="builder-actions btn-group-responsive" style={{ paddingTop: "0.5rem", borderTop: "1px solid var(--border)" }}>
             <button onClick={downloadPDF} disabled={downloading} style={{ flex: 1 }}>
-              {downloading ? "⏳ Generating PDF..." : "⬇️ Download PDF"}
+              {downloading ? "⏳ Generating PDF..." : "⬇ Download PDF"}
             </button>
             <button className="secondary" onClick={saveToDB} disabled={saving} style={{ flex: 1 }}>
-              {saving ? "Saving..." : "💾 Save to Database"}
+              {saving ? "Saving..." : " Save to Database"}
             </button>
             <button
               className="secondary"
@@ -816,7 +816,7 @@ export default function ResumeBuilder({ form, setForm }) {
                 fontWeight: 600
               }}
             >
-              {checkingGrammar ? "✨ Proofreading..." : "📝 Check Grammar"}
+              {checkingGrammar ? " Proofreading..." : " Check Grammar"}
             </button>
             <button
               className="secondary"
@@ -828,7 +828,7 @@ export default function ResumeBuilder({ form, setForm }) {
                 color: "var(--accent-light, #c084fc)"
               }}
             >
-              🎯 Tailor to Job
+               Tailor to Job
             </button>
           </div>
         </div>
@@ -838,7 +838,7 @@ export default function ResumeBuilder({ form, setForm }) {
           {/* Header bar */}
           <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1rem 1.25rem", width: "100%", marginBottom: "0.75rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-main)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              📄 Live Preview
+               Live Preview
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Updates as you type</span>
@@ -1035,7 +1035,7 @@ export default function ResumeBuilder({ form, setForm }) {
                     </div>
                     {proj.link && (
                       <div style={{ fontSize: "8.5pt", color: selectedTheme.accent, marginBottom: "2px", fontFamily: selectedFont.value, fontWeight: 500 }}>
-                        🔗 <a href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`} target="_blank" rel="noreferrer" style={{ color: selectedTheme.accent, textDecoration: "underline" }}>{proj.link}</a>
+                         <a href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`} target="_blank" rel="noreferrer" style={{ color: selectedTheme.accent, textDecoration: "underline" }}>{proj.link}</a>
                       </div>
                     )}
                     {proj.description && (
@@ -1094,12 +1094,12 @@ export default function ResumeBuilder({ form, setForm }) {
             padding: "1.5rem"
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontSize: "1.25rem", color: "var(--text-main)" }}>🎯 Tailor Resume with AI</h3>
+              <h3 style={{ margin: 0, fontSize: "1.25rem", color: "var(--text-main)" }}> Tailor Resume with AI</h3>
               <button className="secondary" style={{ padding: "0.25rem 0.5rem", minWidth: "auto", fontSize: "0.9rem" }} onClick={() => {
                 setIsTailorModalOpen(false);
                 setTailoredPreview(null);
                 setJobDescription("");
-              }}>✕</button>
+              }}></button>
             </div>
             
             {!tailoredPreview ? (
@@ -1123,7 +1123,7 @@ export default function ResumeBuilder({ form, setForm }) {
                     disabled={tailoring || !jobDescription.trim()}
                     style={{ flex: 1 }}
                   >
-                    {tailoring ? "⏳ Optimizing Resume..." : "✨ Optimize Resume"}
+                    {tailoring ? "⏳ Optimizing Resume..." : " Optimize Resume"}
                   </button>
                   <button
                     className="secondary"
@@ -1171,7 +1171,7 @@ export default function ResumeBuilder({ form, setForm }) {
                     onClick={applyTailoredResume}
                     style={{ flex: 1 }}
                   >
-                    ✅ Apply Changes
+                     Apply Changes
                   </button>
                 </div>
               </>

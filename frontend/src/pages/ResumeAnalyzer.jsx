@@ -278,7 +278,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
       <div className="container" style={{ paddingTop: 0 }}>
         {/* Upload Card */}
         <div className="card" style={{ maxWidth: 760, margin: "0 auto 2rem" }}>
-          <div className="section-chip" style={{ marginBottom: "1.25rem" }}>📤 Upload Resume</div>
+          <div className="section-chip" style={{ marginBottom: "1.25rem" }}> Upload Resume</div>
 
           <div className="form-group">
             <label>Resume File (.pdf or .docx)</label>
@@ -320,7 +320,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
               <label htmlFor="resume-file-input" style={{ cursor: "pointer", display: "block" }}>
                 {file ? (
                   <>
-                    <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✅</div>
+                    <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}></div>
                     <div style={{ fontWeight: 600, color: "var(--primary)", marginBottom: "0.25rem" }}>{file.name}</div>
                     <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
                       {(file.size / 1024).toFixed(1)} KB — Click to change
@@ -328,7 +328,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                   </>
                 ) : (
                   <>
-                    <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📄</div>
+                    <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}></div>
                     <div style={{ fontWeight: 600, color: "var(--text-main)", marginBottom: "0.25rem" }}>
                       Click to upload your resume
                     </div>
@@ -363,7 +363,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                   gap: "0.35rem"
                 }}
               >
-                {suggestingJobDesc ? "✨ Generating..." : "✨ AI Suggest Job Description"}
+                {suggestingJobDesc ? " Generating..." : " AI Suggest Job Description"}
               </button>
             </div>
 
@@ -403,7 +403,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
               rows={5}
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste the job description here or click '✨ AI Suggest Job Description' above..."
+              placeholder="Paste the job description here or click ' AI Suggest Job Description' above..."
             />
           </div>
 
@@ -419,7 +419,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                   Analyzing...
                 </span>
               ) : (
-                "🔍 Analyze Resume"
+                " Analyze Resume"
               )}
             </button>
             <button
@@ -441,7 +441,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                   Tailoring...
                 </span>
               ) : (
-                "🎯 Tailor Resume"
+                " Tailor Resume"
               )}
             </button>
           </div>
@@ -459,7 +459,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
               alignItems: "center",
               gap: "0.5rem",
             }}>
-              ⚠️ {error}
+               {error}
             </div>
           )}
         </div>
@@ -472,7 +472,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
           <div id="analysis-result-section" className="card animate-in" style={{ maxWidth: 760, margin: "0 auto 2rem" }}>
             {result.rawResponse ? (
               <>
-                <div className="section-chip" style={{ marginBottom: "1rem" }}>📊 Analysis Result</div>
+                <div className="section-chip" style={{ marginBottom: "1rem" }}> Analysis Result</div>
                 <pre style={{ whiteSpace: "pre-wrap", background: "var(--surface-2)", padding: "1.25rem", borderRadius: "var(--radius)", fontSize: "0.875rem", lineHeight: "1.6", overflowX: "auto", border: "1px solid var(--border)" }}>
                   {result.rawResponse}
                 </pre>
@@ -482,7 +482,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                 {/* Score Header */}
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "2rem", marginBottom: "1.75rem", paddingBottom: "1.75rem", borderBottom: "1px solid var(--border)", flexWrap: "wrap" }}>
                   <div style={{ flex: 1 }}>
-                    <div className="section-chip" style={{ marginBottom: "0.75rem" }}>📊 Analysis Complete</div>
+                    <div className="section-chip" style={{ marginBottom: "0.75rem" }}> Analysis Complete</div>
                     <p style={{ fontSize: "1rem", color: "var(--text-main)", lineHeight: "1.6", margin: 0 }}>{result.summary}</p>
                   </div>
                   <div className="score-rings-row" style={{ display: "flex", gap: "2rem" }}>
@@ -494,13 +494,13 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                 {/* Strengths & Weaknesses */}
                 <div className="strengths-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "1.5rem" }}>
                   <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1.25rem" }}>
-                    <h4 style={{ color: "var(--primary)", marginBottom: "0.75rem", fontSize: "0.9rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>✅ Strengths</h4>
+                    <h4 style={{ color: "var(--primary)", marginBottom: "0.75rem", fontSize: "0.9rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}> Strengths</h4>
                     <ul style={{ paddingLeft: "1.2rem", color: "var(--text-main)", fontSize: "0.9rem", lineHeight: "1.7" }}>
                       {result.strengths?.map((s, i) => <li key={i}>{s}</li>)}
                     </ul>
                   </div>
                   <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1.25rem" }}>
-                    <h4 style={{ color: "var(--text-muted)", marginBottom: "0.75rem", fontSize: "0.9rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>❌ Weaknesses</h4>
+                    <h4 style={{ color: "var(--text-muted)", marginBottom: "0.75rem", fontSize: "0.9rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}> Weaknesses</h4>
                     <ul style={{ paddingLeft: "1.2rem", color: "var(--text-main)", fontSize: "0.9rem", lineHeight: "1.7" }}>
                       {result.weaknesses?.map((w, i) => <li key={i}>{w}</li>)}
                     </ul>
@@ -510,7 +510,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                 {/* Missing Keywords */}
                 {result.missingKeywords?.length > 0 && (
                   <div style={{ marginBottom: "1.5rem", background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1.25rem" }}>
-                    <h4 style={{ color: "var(--primary)", marginBottom: "0.75rem", fontSize: "0.9rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>🔑 Missing Keywords</h4>
+                    <h4 style={{ color: "var(--primary)", marginBottom: "0.75rem", fontSize: "0.9rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}> Missing Keywords</h4>
                     <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "0.75rem" }}>Click any keyword to add it to your Resume Builder</p>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                       {result.missingKeywords.map((kw, i) => (
@@ -530,7 +530,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                 {/* Suggestions */}
                 {result.suggestions?.length > 0 && (
                   <div style={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1.25rem" }}>
-                    <h4 style={{ color: "var(--primary)", marginBottom: "0.75rem", fontSize: "0.9rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>💡 Suggestions for Improvement</h4>
+                    <h4 style={{ color: "var(--primary)", marginBottom: "0.75rem", fontSize: "0.9rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}> Suggestions for Improvement</h4>
                     <ul style={{ paddingLeft: "1.2rem", color: "var(--text-main)", fontSize: "0.9rem", lineHeight: "1.7" }}>
                       {result.suggestions.map((s, i) => <li key={i} style={{ marginBottom: "0.4rem" }}>{s}</li>)}
                     </ul>
@@ -546,7 +546,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
           <div id="tailored-result-section" className="card animate-in" style={{ maxWidth: 760, margin: "0 auto 2rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
               <div>
-                <div className="section-chip" style={{ marginBottom: "0.5rem" }}>🎯 AI Tailored Resume</div>
+                <div className="section-chip" style={{ marginBottom: "0.5rem" }}> AI Tailored Resume</div>
                 <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: 0 }}>
                   This tailored version is fully optimized for the job description.
                 </p>
@@ -562,7 +562,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                     fontWeight: 600
                   }}
                 >
-                  {checkingGrammar ? "✨ Proofreading..." : "📝 Check Grammar & Polish"}
+                  {checkingGrammar ? " Proofreading..." : " Check Grammar & Polish"}
                 </button>
                 <button
                   onClick={downloadTailoredPDF}
@@ -573,7 +573,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                     color: "var(--accent-light, #c084fc)"
                   }}
                 >
-                  {downloadingTailored ? "⏳ Generating..." : "⬇️ Download PDF"}
+                  {downloadingTailored ? "⏳ Generating..." : "⬇ Download PDF"}
                 </button>
                 <button
                   onClick={() => {
@@ -586,7 +586,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                     boxShadow: "0 4px 15px rgba(245, 158, 11, 0.25)"
                   }}
                 >
-                  ✏️ Open in Resume Builder
+                   Open in Resume Builder
                 </button>
               </div>
             </div>
@@ -603,7 +603,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                 whiteSpace: "pre-line",
                 lineHeight: "1.5"
               }}>
-                <strong>✨ AI Grammar & Style Polish Applied:</strong>
+                <strong> AI Grammar & Style Polish Applied:</strong>
                 <br />
                 {grammarNotice}
               </div>
@@ -786,7 +786,7 @@ export default function ResumeAnalyzer({ form, setForm, setView }) {
                         </div>
                         {proj.link && (
                           <div style={{ fontSize: "8.5pt", color: selectedTheme.accent, marginBottom: "2px", fontFamily: selectedFont.value, fontWeight: 500 }}>
-                            🔗 <a href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`} target="_blank" rel="noreferrer" style={{ color: selectedTheme.accent, textDecoration: "underline" }}>{proj.link}</a>
+                             <a href={proj.link.startsWith("http") ? proj.link : `https://${proj.link}`} target="_blank" rel="noreferrer" style={{ color: selectedTheme.accent, textDecoration: "underline" }}>{proj.link}</a>
                           </div>
                         )}
                         {proj.description && (

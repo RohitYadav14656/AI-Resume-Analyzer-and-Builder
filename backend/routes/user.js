@@ -480,8 +480,15 @@ router.post("/verify-payment", async (req, res, next) => {
     const { orderId, paymentId, signature, creditsCount, plan, utrNumber } = req.body;
     const crypto = require("crypto");
     const SystemConfig = require("../models/SystemConfig");
+    const Transaction = require("../models/Transaction");
     const config = await SystemConfig.findOne({ key: "global_settings" });
     const keySecret = config?.razorpayKeySecret || process.env.RAZORPAY_KEY_SECRET || "";
+
+    const isRazorpay = config?.paymentGateway === "razorpay" && config?.razorpayKeyId && config?.razorpayKeySecret;
+
+    if (isRazorpay && !signature && !utrNumber) {
+      throw new AppError("Payment verification failed. Missing Razorpay signature.", 400);
+    }
 
     if (keySecret && signature) {
       const generatedSignature = crypto
@@ -491,6 +498,22 @@ router.post("/verify-payment", async (req, res, next) => {
 
       if (generatedSignature !== signature) {
         throw new AppError("Payment verification failed. Invalid HMAC signature.", 400);
+      }
+    } else if (utrNumber) {
+      const utrStr = String(utrNumber).trim();
+      if (!/^\d{12}$/.test(utrStr)) {
+        throw new AppError("Invalid Transaction ID. Please enter a valid 12-digit numeric UTR.", 400);
+      }
+    } else {
+      throw new AppError("Invalid payment details provided. Provide a UTR or valid signature.", 400);
+    }
+
+    // Prevent duplicate processing
+    const referenceId = utrNumber ? String(utrNumber).trim() : paymentId;
+    if (referenceId) {
+      const existingTx = await Transaction.findOne({ referenceId });
+      if (existingTx) {
+        throw new AppError("This transaction ID has already been processed.", 400);
       }
     }
 
@@ -505,6 +528,25 @@ router.post("/verify-payment", async (req, res, next) => {
         ? (config?.proPlanPrice !== undefined ? config.proPlanPrice : 499)
         : (config?.enterprisePlanPrice !== undefined ? config.enterprisePlanPrice : 1999);
 
+      if (utrNumber) {
+        // Pending logic for Subscription
+        await Transaction.create({
+          referenceId,
+          userId: req.user.userId,
+          type: "manual_utr",
+          amount: planPrice,
+          status: "pending",
+          planRequested: targetPlan
+        });
+        
+        return res.json({
+          success: true,
+          pending: true,
+          message: `Payment submitted for review! Your subscription will be activated once verified.`
+        });
+      }
+
+      // Instant logic for Razorpay Subscription
       user.subscription = targetPlan;
       const extraCredits = targetPlan === "pro" ? 100 : 500;
       user.aiCredits = (user.aiCredits || 0) + extraCredits;
@@ -521,8 +563,19 @@ router.post("/verify-payment", async (req, res, next) => {
 
       await user.save();
 
+      if (referenceId) {
+        await Transaction.create({
+          referenceId,
+          userId: req.user.userId,
+          type: "razorpay",
+          amount: planPrice,
+          status: "verified"
+        });
+      }
+
       return res.json({
         success: true,
+        pending: false,
         message: `🎉 Payment Verified! Subscribed to ${targetPlan.toUpperCase()} Plan (₹${planPrice}) with +${extraCredits} Bonus Credits!`,
         subscription: user.subscription,
         aiCredits: user.aiCredits,
@@ -535,6 +588,26 @@ router.post("/verify-payment", async (req, res, next) => {
       }
       const pricePerCredit = config?.pricePerCreditInr !== undefined ? config.pricePerCreditInr : 2;
       const totalAmountInr = count * pricePerCredit;
+
+      if (utrNumber) {
+        // Pending logic for Credits
+        await Transaction.create({
+          referenceId,
+          userId: req.user.userId,
+          type: "manual_utr",
+          amount: totalAmountInr,
+          status: "pending",
+          creditsRequested: count
+        });
+        
+        return res.json({
+          success: true,
+          pending: true,
+          message: `Payment submitted for review! ${count} AI Credits will be added once verified.`
+        });
+      }
+
+      // Instant logic for Razorpay Credits
       user.aiCredits = (user.aiCredits || 0) + count;
 
       user.recentActivity.unshift({
@@ -549,8 +622,19 @@ router.post("/verify-payment", async (req, res, next) => {
 
       await user.save();
 
+      if (referenceId) {
+        await Transaction.create({
+          referenceId,
+          userId: req.user.userId,
+          type: "razorpay",
+          amount: totalAmountInr,
+          status: "verified"
+        });
+      }
+
       return res.json({
         success: true,
+        pending: false,
         message: `🎉 Payment Verified! +${count} AI Credits added to your account.`,
         subscription: user.subscription,
         aiCredits: user.aiCredits,

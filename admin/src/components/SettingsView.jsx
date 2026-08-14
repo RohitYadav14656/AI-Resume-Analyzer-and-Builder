@@ -99,7 +99,7 @@ export default function SettingsView({ token }) {
       }
     } catch (err) {
       if (err.response?.status === 401) {
-        setErrorMsg("🔑 Admin authentication token expired or missing. Please log out and log back into the Admin Dashboard.");
+        setErrorMsg(" Admin authentication token expired or missing. Please log out and log back into the Admin Dashboard.");
       } else {
         setErrorMsg(err.response?.data?.error || err.response?.data?.message || "Failed to save settings.");
       }
@@ -145,13 +145,13 @@ export default function SettingsView({ token }) {
           fontSize: "0.85rem",
           fontWeight: 600
         }}>
-          ⚠️ {errorMsg}
+           {errorMsg}
         </div>
       )}
 
       <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         
-        {/* 🔒 Section 0: Admin 2FA Security Phone Number */}
+        {/*  Section 0: Admin 2FA Security Phone Number */}
         <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "18px", background: "rgba(245, 158, 11, 0.04)", border: "1px solid rgba(245, 158, 11, 0.25)" }}>
           <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "8px" }}>
             <Lock size={20} color="#d97706" /> Admin Security & 2-Factor SMS Verification
@@ -249,7 +249,7 @@ export default function SettingsView({ token }) {
           </div>
         </div>
 
-        {/* 💳 Section 1: Payment Gateway Credentials */}
+        {/*  Section 1: Payment Gateway Credentials */}
         <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "18px" }}>
           <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "8px" }}>
             <CreditCard size={20} color="#d97706" /> Payment Gateway Configuration (Collect Money)
@@ -270,9 +270,9 @@ export default function SettingsView({ token }) {
                 outline: "none"
               }}
             >
-              <option value="upi_qr">📱 FamPay & UPI QR Code (Direct Payment to FamPay @fam / any UPI)</option>
-              <option value="mock">⚡ Mock Payment Gateway Simulator (Instant Checkout Test Interface)</option>
-              <option value="razorpay">💳 Razorpay API (Merchant Account Required)</option>
+              <option value="upi_qr"> FamPay & UPI QR Code (Direct Payment to FamPay @fam / any UPI)</option>
+              <option value="mock"> Mock Payment Gateway Simulator (Instant Checkout Test Interface)</option>
+              <option value="razorpay"> Razorpay API (Merchant Account Required)</option>
             </select>
           </div>
 
@@ -374,12 +374,12 @@ export default function SettingsView({ token }) {
             </div>
           ) : (
             <div style={{ background: "rgba(99, 102, 241, 0.08)", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(99, 102, 241, 0.2)", fontSize: "0.85rem", color: "#3730a3" }}>
-              ⚡ <strong>Mock Payment Gateway Simulator Active:</strong> Users will see an interactive payment portal to simulate payments (Card, NetBanking, UPI QR, 1-Click Pay) without requiring any real bank account or external gateway keys.
+               <strong>Mock Payment Gateway Simulator Active:</strong> Users will see an interactive payment portal to simulate payments (Card, NetBanking, UPI QR, 1-Click Pay) without requiring any real bank account or external gateway keys.
             </div>
           )}
         </div>
 
-        {/* 🇮🇳 Section 2: AI Credit Pricing & Subscription Tier Rates (INR ₹) */}
+        {/*  Section 2: AI Credit Pricing & Subscription Tier Rates (INR ₹) */}
         <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "18px" }}>
           <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "8px" }}>
             <IndianRupee size={20} color="#d97706" /> Subscription Tiers, Free Credits & Token Pricing (INR ₹)
@@ -545,7 +545,7 @@ export default function SettingsView({ token }) {
           </div>
         </div>
 
-        {/* 🤖 Section 3: AI Engine Configuration */}
+        {/*  Section 3: AI Engine Configuration */}
         <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "8px" }}>
             <Cpu size={18} color="#d97706" /> AI Model & Platform Engine

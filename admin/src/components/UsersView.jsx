@@ -490,8 +490,8 @@ export default function UsersView({ users, setUsers, searchFilter, setSearchFilt
                                 }}
                               >
                                 {user.isOnline || (user.lastActiveAt && Date.now() - new Date(user.lastActiveAt).getTime() < 5 * 60 * 1000)
-                                  ? "🟢 Online"
-                                  : "⚪ Offline"}
+                                  ? " Online"
+                                  : " Offline"}
                               </span>
                             </div>
                             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{user.email}</div>
@@ -554,7 +554,7 @@ export default function UsersView({ users, setUsers, searchFilter, setSearchFilt
                             style={{ padding: "6px 10px", fontSize: "0.75rem", background: "rgba(217, 119, 6, 0.12)", color: "var(--accent)", border: "1px solid rgba(217, 119, 6, 0.3)" }}
                             title="Give AI Credits to this user"
                           >
-                            ⚡ +Credits
+                             +Credits
                           </button>
 
                           <button
@@ -660,7 +660,7 @@ export default function UsersView({ users, setUsers, searchFilter, setSearchFilt
                 <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{drawerUser.email}</p>
                 <div style={{ display: "flex", gap: "6px", marginTop: "6px", flexWrap: "wrap" }}>
                   <span className={`badge ${drawerUser.isOnline || (drawerUser.lastActiveAt && Date.now() - new Date(drawerUser.lastActiveAt).getTime() < 5 * 60 * 1000) ? "badge-emerald" : "badge-rose"}`}>
-                    {drawerUser.isOnline || (drawerUser.lastActiveAt && Date.now() - new Date(drawerUser.lastActiveAt).getTime() < 5 * 60 * 1000) ? "🟢 Online" : "⚪ Offline"}
+                    {drawerUser.isOnline || (drawerUser.lastActiveAt && Date.now() - new Date(drawerUser.lastActiveAt).getTime() < 5 * 60 * 1000) ? " Online" : " Offline"}
                   </span>
                   <span className={`badge ${drawerUser.role === "admin" ? "badge-indigo" : "badge-emerald"}`}>{drawerUser.role}</span>
                   <span className={`badge ${drawerUser.status === "suspended" ? "badge-rose" : "badge-emerald"}`}>{drawerUser.status || "active"}</span>
@@ -687,25 +687,25 @@ export default function UsersView({ users, setUsers, searchFilter, setSearchFilt
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "12px", borderRadius: "10px", background: "var(--surface-2)", fontSize: "0.8rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>📡 Online Status:</span>
+                  <span style={{ color: "var(--text-muted)", fontWeight: 600 }}> Online Status:</span>
                   <span style={{ fontWeight: 700, color: drawerUser.isOnline || (drawerUser.lastActiveAt && Date.now() - new Date(drawerUser.lastActiveAt).getTime() < 5 * 60 * 1000) ? "#047857" : "#6b7280" }}>
-                    {drawerUser.isOnline || (drawerUser.lastActiveAt && Date.now() - new Date(drawerUser.lastActiveAt).getTime() < 5 * 60 * 1000) ? "🟢 Currently Online" : "⚪ Offline"}
+                    {drawerUser.isOnline || (drawerUser.lastActiveAt && Date.now() - new Date(drawerUser.lastActiveAt).getTime() < 5 * 60 * 1000) ? " Currently Online" : " Offline"}
                   </span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>✍️ Account Signed Up:</span>
+                  <span style={{ color: "var(--text-muted)", fontWeight: 600 }}> Account Signed Up:</span>
                   <span style={{ fontWeight: 700, color: "var(--text-main)" }}>
                     {drawerUser.createdAt ? new Date(drawerUser.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "N/A"}
                   </span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>🔑 First Login:</span>
+                  <span style={{ color: "var(--text-muted)", fontWeight: 600 }}> First Login:</span>
                   <span style={{ fontWeight: 700, color: "var(--text-main)" }}>
                     {drawerUser.firstLogin || drawerUser.createdAt ? new Date(drawerUser.firstLogin || drawerUser.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "N/A"}
                   </span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>🕒 Last Login / Active:</span>
+                  <span style={{ color: "var(--text-muted)", fontWeight: 600 }}> Last Login / Active:</span>
                   <span style={{ fontWeight: 700, color: "#d97706" }}>
                     {drawerUser.lastActiveAt || drawerUser.lastLogin || drawerUser.createdAt ? new Date(drawerUser.lastActiveAt || drawerUser.lastLogin || drawerUser.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "N/A"}
                   </span>

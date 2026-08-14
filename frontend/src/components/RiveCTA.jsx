@@ -24,7 +24,7 @@ export default function RiveCTA({ onClick, label = "Analyze Resume" }) {
       }}
     >
       <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        ✨ {label}
+         {label}
       </span>
     </button>
   );

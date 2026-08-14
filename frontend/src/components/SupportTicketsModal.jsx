@@ -123,7 +123,7 @@ export default function SupportTicketsModal({ isOpen, onClose }) {
           background: "var(--surface-2)"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "1.2rem" }}>🎫</span>
+            <span style={{ fontSize: "1.2rem" }}></span>
             <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--primary)" }}>
               Support & Help Desk
             </h3>
@@ -158,7 +158,7 @@ export default function SupportTicketsModal({ isOpen, onClose }) {
                 padding: "0.2rem 0.5rem"
               }}
             >
-              ✕
+              
             </button>
           </div>
         </div>
@@ -220,7 +220,7 @@ export default function SupportTicketsModal({ isOpen, onClose }) {
               <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>Loading tickets...</div>
             ) : tickets.length === 0 ? (
               <div style={{ textAlign: "center", padding: "3rem 1rem", color: "var(--text-muted)" }}>
-                <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>💬</div>
+                <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}></div>
                 <p style={{ fontWeight: 600, margin: 0 }}>No support tickets found</p>
                 <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>Have a question or issue? Click "+ Create New Ticket" to get help.</p>
               </div>
@@ -270,7 +270,7 @@ export default function SupportTicketsModal({ isOpen, onClose }) {
                       </p>
                       {ticket.replies && ticket.replies.length > 0 && (
                         <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--accent)", fontWeight: 600 }}>
-                          💬 {ticket.replies.length} reply({ticket.replies.length > 1 ? "ies" : ""})
+                           {ticket.replies.length} reply({ticket.replies.length > 1 ? "ies" : ""})
                         </div>
                       )}
                     </div>
@@ -405,7 +405,7 @@ export default function SupportTicketsModal({ isOpen, onClose }) {
                       >
                         <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", marginBottom: "0.2rem" }}>
                           <strong style={{ fontSize: "0.8rem", color: isAdmin ? "#15803d" : "#334155" }}>
-                            {isAdmin ? `🛡️ ${reply.senderName} (Admin)` : reply.senderName}
+                            {isAdmin ? ` ${reply.senderName} (Admin)` : reply.senderName}
                           </strong>
                           <span style={{ fontSize: "0.7rem", color: "var(--text-light)" }}>
                             {new Date(reply.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

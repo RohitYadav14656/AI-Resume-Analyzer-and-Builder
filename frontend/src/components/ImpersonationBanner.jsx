@@ -19,7 +19,7 @@ export default function ImpersonationBanner({ user, onExit }) {
       zIndex: 9999,
     }}>
       <span>
-        🕵️ <strong>Admin Impersonation Mode:</strong> You are currently viewing as <u>{user.email}</u> (Session initiated by {user.impersonatedBy}).
+         <strong>Admin Impersonation Mode:</strong> You are currently viewing as <u>{user.email}</u> (Session initiated by {user.impersonatedBy}).
       </span>
       <button
         onClick={onExit}

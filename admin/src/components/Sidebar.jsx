@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   X,
+  CreditCard,
 } from "lucide-react";
 import WebsiteLogo from "./WebsiteLogo";
 
@@ -36,6 +37,7 @@ export default function Sidebar({
     { id: "logs", label: "Logs & Monitoring", icon: Terminal },
     { id: "security", label: "Security & RBAC", icon: ShieldAlert },
     { id: "health", label: "System & Health", icon: Activity },
+    { id: "payments", label: "Payments", icon: CreditCard },
     { id: "reports", label: "Reports & Exports", icon: FileSpreadsheet },
     { id: "settings", label: "Settings", icon: Settings },
   ];

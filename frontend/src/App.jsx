@@ -76,7 +76,7 @@ export default function App() {
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [buyCreditsModalProps, setBuyCreditsModalProps] = useState({ isOpen: false, mode: "credits", plan: "pro" });
-  const [systemConfig, setSystemConfig] = useState({ maintenanceMode: false, maintenanceNotice: "", pricePerCreditInr: 2 });
+  const [systemConfig, setSystemConfig] = useState({ maintenanceMode: false, maintenanceNotice: "", pricePerCreditInr: 2, proPlanPrice: 499, enterprisePlanPrice: 1999 });
 
   const handleOpenBuyCredits = (modeOrPlan) => {
     if (modeOrPlan === "pro" || modeOrPlan === "enterprise") {
@@ -143,6 +143,8 @@ export default function App() {
             maintenanceMode: data.maintenanceMode || false,
             maintenanceNotice: data.maintenanceNotice || "",
             pricePerCreditInr: data.pricePerCreditInr !== undefined ? data.pricePerCreditInr : 2,
+            proPlanPrice: data.proPlanPrice !== undefined ? data.proPlanPrice : 499,
+            enterprisePlanPrice: data.enterprisePlanPrice !== undefined ? data.enterprisePlanPrice : 1999,
           });
         }
       } catch (err) {
@@ -348,7 +350,7 @@ export default function App() {
               width: "calc(100% - 2rem)",
             }}
           >
-            <span style={{ fontSize: "1.1rem" }}>{verifiedToast === "success" ? "✅" : "⚠️"}</span>
+            <span style={{ fontSize: "1.1rem" }}>{verifiedToast === "success" ? "" : ""}</span>
             <span style={{ flex: 1 }}>
               {verifiedToast === "success"
                 ? "Email verified! You can now log in to your account."
@@ -358,7 +360,7 @@ export default function App() {
               onClick={() => setVerifiedToast("")}
               style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", padding: "2px 8px", fontSize: "0.8rem" }}
             >
-              ✕
+              
             </button>
           </motion.div>
         )}
@@ -409,6 +411,8 @@ export default function App() {
         user={user}
         initialMode={buyCreditsModalProps.mode}
         initialPlan={buyCreditsModalProps.plan}
+        proPrice={systemConfig.proPlanPrice}
+        enterprisePrice={systemConfig.enterprisePlanPrice}
         pricePerCreditInr={systemConfig.pricePerCreditInr}
         onCreditsPurchased={(newCredits, newSubscription) => {
           setUser((prev) => {
@@ -470,12 +474,12 @@ function HeroPage({ navigate }) {
                 style={{ padding: "0.85rem 2rem", fontSize: "1rem", borderRadius: "14px", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "0.5rem" }} 
                 onClick={() => navigate("builder")}
               >
-                🚀 Build My Resume
+                 Build My Resume
               </button>
 
               <Suspense fallback={
                 <button className="nav-secondary-btn" style={{ padding: "0.85rem 1.8rem", fontSize: "1rem", borderRadius: "14px" }} onClick={() => navigate("analyzer")}>
-                  ✨ Analyze Resume
+                   Analyze Resume
                 </button>
               }>
                 <RiveCTA 
