@@ -75,11 +75,12 @@ router.get("/:id", validateObjectId, async (req, res, next) => {
 
 router.put("/:id", auth, validateObjectId, validate(resumeUpdateSchema), async (req, res, next) => {
   try {
-    const resume = await Resume.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const resume = await Resume.findById(req.params.id);
     if (!resume) throw new AppError("Resume not found.", 404);
+
+    // Apply updates
+    Object.assign(resume, req.body);
+    await resume.save();
 
     const userId = req.user?.userId || resume.userId;
     if (userId) {

@@ -34,7 +34,7 @@ router.get(["/stats", "/dashboard"], async (req, res, next) => {
     const openTickets = await Ticket.countDocuments({ status: "open" });
 
     // Aggregate ATS score metrics
-    const resumes = await Resume.find().select("summary skills experience projects atsScore");
+    const resumes = await Resume.find().select("compressedData atsScore");
     let totalScoreSum = 0;
     resumes.forEach((r) => {
       let score = r.atsScore || 65;
