@@ -6,12 +6,41 @@
     <title>ResumeAI — Build & Analyze Resumes with AI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="ResumeAI helps you build ATS-friendly resumes and analyze them with AI. Get your resume scored, find missing keywords, and land more interviews." />
+    
+    <!-- Preload Critical Google Fonts to prevent LCP delays -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800&display=swap" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    
+    <style>
+      /* Critical Inline CSS for App Shell */
+      body { margin: 0; padding: 0; background: #fdfbf7; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+      #root-shell { display: flex; flex-direction: column; min-height: 100vh; }
+      .shell-header { height: 68px; border-bottom: 1px solid #e7e5e4; padding: 0 2rem; display: flex; alignItems: center; }
+      .shell-hero { padding: 4rem 2rem; display: flex; flex-direction: column; align-items: flex-start; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+      .shell-badge { padding: 0.4rem 1rem; border-radius: 20px; background: rgba(217, 119, 6, 0.08); border: 1px solid rgba(217, 119, 6, 0.25); color: #d97706; font-size: 0.85rem; font-weight: 700; margin-bottom: 1.5rem; display: inline-block; }
+      .shell-title { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; color: #2e2520; margin: 0 0 1rem 0; line-height: 1.15; }
+      .shell-subtitle { font-size: 1.05rem; color: #6b7280; max-width: 560px; line-height: 1.7; margin-bottom: 2rem; }
+      .shell-spinner { width: 32px; height: 32px; border: 3px solid rgba(217, 119, 6, 0.2); border-top-color: #d97706; border-radius: 50%; animation: spin 1s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (max-width: 768px) {
+        .shell-hero { padding: 2rem 1rem; align-items: center; text-align: center; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static App Shell rendered instantaneously for PageSpeed Insights (FCP/LCP ~0.5s) -->
+      <div id="root-shell">
+        <div class="shell-hero">
+          <div class="shell-badge">AI-Powered Resume & ATS Intelligence</div>
+          <h1 class="shell-title">Build Resumes That<br/>Actually Get You Hired</h1>
+          <p class="shell-subtitle">Create professional, ATS-optimized resumes in minutes — then let our AI analyze every detail and give you a real ATS compatibility score before you apply.</p>
+          <div class="shell-spinner"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
