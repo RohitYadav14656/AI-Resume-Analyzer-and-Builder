@@ -29,7 +29,7 @@ const { sendPasswordResetEmail, sendVerificationEmail } = require("../utils/emai
 const router = express.Router();
 
 // Apply strict rate limiting to all auth routes
-router.use(authLimiter);
+// router.use(authLimiter);
 
 // ─── Cookie options ───────────────────────────────────────────────────────────
 const REFRESH_COOKIE_NAME = "refreshToken";
@@ -93,7 +93,7 @@ function generateVerificationToken() {
 }
 
 // ─── Register ─────────────────────────────────────────────────────────────────
-router.post("/register", validate(registerSchema), async (req, res, next) => {
+router.post("/register", authLimiter, validate(registerSchema), async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
@@ -158,7 +158,7 @@ router.post("/register", validate(registerSchema), async (req, res, next) => {
 });
 
 // ─── Login ────────────────────────────────────────────────────────────────────
-router.post("/login", validate(loginSchema), async (req, res, next) => {
+router.post("/login", authLimiter, validate(loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const cleanEmail = String(email || "").toLowerCase().trim();
