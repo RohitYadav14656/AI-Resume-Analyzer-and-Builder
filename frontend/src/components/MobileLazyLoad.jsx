@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 export default function MobileLazyLoad({ children }) {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef(null);
 

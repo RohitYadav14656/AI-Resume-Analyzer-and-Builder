@@ -13,8 +13,14 @@ function CountUp({ end, duration = 2, suffix = "" }) {
 
 export default function Home({ navigate, user }) {
   const [analyzingState, setAnalyzingState] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isSlowConnection, setIsSlowConnection] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  const [isSlowConnection, setIsSlowConnection] = useState(() => {
+    if (typeof navigator !== 'undefined' && navigator.connection) {
+       const conn = navigator.connection;
+       return conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g' || conn.effectiveType === '3g' || conn.saveData;
+    }
+    return false;
+  });
 
   React.useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
