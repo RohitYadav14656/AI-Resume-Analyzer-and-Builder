@@ -3449,6 +3449,26 @@ html, body {
   animation: fade-in-scale 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+
+/* ============ PERFORMANCE OPTIMIZED NATIVE ANIMATIONS ============ */
+@keyframes fade-in-left {
+  0% { opacity: 0; transform: translateX(-30px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fade-in-scale {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in-left {
+  animation: fade-in-left 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 .hover-lift {
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -3457,3 +3477,40 @@ html, body {
   transform: translateY(-6px);
 }
 
+/* ============ UNIVERSAL MOBILE RESPONSIVENESS OVERRIDES ============ */
+@media (max-width: 768px) {
+  /* Override inline React grid columns that squish on mobile */
+  .profile-header-grid {
+    grid-template-columns: 1fr !important;
+    text-align: center !important;
+    gap: 1.25rem !important;
+  }
+  
+  .profile-header-grid > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* Override inline paddings that are too large for mobile screens */
+  .card[style], div[style*="padding: 2.25rem"], div[style*="padding: 1.75rem"] {
+    padding: 1.25rem !important;
+  }
+
+  /* Ensure horizontal scroll works for preset chips */
+  .preset-chip-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  /* Fix modals that overflow screen width */
+  div[style*="maxWidth: 500px"], div[style*="maxWidth: 600px"], div[style*="max-width: 500px"], div[style*="max-width: 600px"] {
+    width: 95% !important;
+    margin: 0 auto !important;
+  }
+}
