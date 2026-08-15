@@ -2,29 +2,29 @@ const mongoose = require("mongoose");
 
 const ExperienceSchema = new mongoose.Schema(
   {
-    company: String,
-    role: String,
-    duration: String,
-    description: String,
+    company: { type: String, trim: true },
+    role: { type: String, trim: true },
+    duration: { type: String, trim: true },
+    description: { type: String, trim: true },
   },
   { _id: false }
 );
 
 const EducationSchema = new mongoose.Schema(
   {
-    school: String,
-    degree: String,
-    year: String,
+    school: { type: String, trim: true },
+    degree: { type: String, trim: true },
+    year: { type: String, trim: true },
   },
   { _id: false }
 );
 
 const ProjectSchema = new mongoose.Schema(
   {
-    name: String,
-    description: String,
-    techStack: String,
-    link: String,
+    name: { type: String, trim: true },
+    description: { type: String, trim: true },
+    techStack: { type: String, trim: true },
+    link: { type: String, trim: true },
   },
   { _id: false }
 );
@@ -36,28 +36,28 @@ const ResumeSchema = new mongoose.Schema(
       ref: "User",
       required: false,
     },
-    userName: { type: String, required: true },
-    email: String,
-    phone: String,
-    linkedin: String,
-    github: String,
-    summary: String,
-    skills: [String],
+    userName: { type: String, required: true, trim: true },
+    email: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    linkedin: { type: String, trim: true },
+    github: { type: String, trim: true },
+    summary: { type: String, trim: true },
+    skills: [{ type: String, trim: true }],
     experience: [ExperienceSchema],
     education: [EducationSchema],
     projects: [ProjectSchema],
-    title: { type: String, default: "Untitled Resume" },
-    targetJob: { type: String, default: "Full Stack Developer" },
+    title: { type: String, default: "Untitled Resume", trim: true },
+    targetJob: { type: String, default: "Full Stack Developer", trim: true },
     atsScore: { type: Number, default: 85 },
     atsAnalysis: {
-      matchedKeywords: [String],
-      missingSkills: [String],
-      suggestions: [String],
-      industryMatch: String,
+      matchedKeywords: [{ type: String, trim: true }],
+      missingSkills: [{ type: String, trim: true }],
+      suggestions: [{ type: String, trim: true }],
+      industryMatch: { type: String, trim: true },
     },
-    extra: String,
+    extra: { type: String, trim: true },
     isFlagged: { type: Boolean, default: false },
-    flagReason: { type: String, default: "" },
+    flagReason: { type: String, trim: true },
   },
   { timestamps: true }
 );
