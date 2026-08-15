@@ -44,8 +44,19 @@ export default function MobileLazyLoad({ children }) {
   }
 
   return (
-    <div ref={ref} style={{ minHeight: isVisible ? 'auto' : '200px' }}>
-      {isVisible ? children : null}
+    <div ref={ref} style={{ minHeight: isVisible ? 'auto' : '200px', width: '100%' }}>
+      {isVisible ? children : (
+        <div style={{ padding: "4rem 1.5rem", display: "flex", flexDirection: "column", gap: "2rem", opacity: 0.7 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+            <div className="skeleton skeleton-title" style={{ width: "50%", height: "2rem", margin: 0, borderRadius: "8px" }}></div>
+            <div className="skeleton skeleton-text" style={{ width: "80%" }}></div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <div className="skeleton" style={{ height: "140px", borderRadius: "16px", width: "100%" }}></div>
+            <div className="skeleton" style={{ height: "140px", borderRadius: "16px", width: "100%" }}></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

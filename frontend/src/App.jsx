@@ -24,19 +24,25 @@ import MaintenanceScreen from "./components/MaintenanceScreen";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
-// Lightweight Suspense fallback spinner
+// Lightweight Suspense fallback skeleton loader
 const ViewLoader = () => (
-  <div style={{
-    minHeight: "60vh",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "1rem",
-    color: "var(--accent)"
-  }}>
-    <LottieIcon type="spinner" width={42} height={42} />
-    <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-muted)" }}>Loading view...</span>
+  <div className="container" style={{ minHeight: "80vh", paddingTop: "4rem", width: "100%", maxWidth: "1200px", margin: "0 auto" }}>
+    <div className="skeleton skeleton-title" style={{ width: "40%", minWidth: "200px", height: "2.5rem", marginBottom: "3rem", borderRadius: "8px" }}></div>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2rem" }}>
+      <div className="skeleton" style={{ height: "20rem", borderRadius: "var(--radius-lg)" }}></div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <div className="skeleton skeleton-title" style={{ width: "60%" }}></div>
+        <div className="skeleton skeleton-text" style={{ width: "100%" }}></div>
+        <div className="skeleton skeleton-text" style={{ width: "90%" }}></div>
+        <div className="skeleton skeleton-text" style={{ width: "95%" }}></div>
+        <div className="skeleton skeleton-text" style={{ width: "80%" }}></div>
+        <div className="skeleton skeleton-text" style={{ width: "85%" }}></div>
+        <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+          <div className="skeleton" style={{ width: "120px", height: "45px", borderRadius: "8px" }}></div>
+          <div className="skeleton" style={{ width: "120px", height: "45px", borderRadius: "8px" }}></div>
+        </div>
+      </div>
+    </div>
   </div>
 );
 
@@ -352,7 +358,7 @@ export default function App() {
 
       {/* ===== VIEWS ===== */}
       <Suspense fallback={<ViewLoader />}>
-        {view === "home" && <Home navigate={navigate} />}
+        {view === "home" && <Home navigate={navigate} user={user} />}
         {view === "builder" && <ResumeBuilder form={form} setForm={setForm} />}
         {view === "analyzer" && <ResumeAnalyzer form={form} setForm={setForm} setView={setView} />}
         {view === "profile" && (
