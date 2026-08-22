@@ -23,6 +23,8 @@ import ImpersonationBanner from "./components/ImpersonationBanner";
 import MaintenanceScreen from "./components/MaintenanceScreen";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import CookieConsent from "./components/CookieConsent";
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Lightweight Suspense fallback skeleton loader
 const ViewLoader = () => (
@@ -50,7 +52,15 @@ const emptyExperience = { company: "", role: "", duration: "", description: "" }
 const emptyEducation = { school: "", degree: "", year: "" };
 
 export default function App() {
-  const [view, setView] = useState("home"); // "home" | "builder" | "analyzer" | "login" | "profile"
+  const [view, setView] = useState(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname;
+      if (path !== '/' && path !== '/index.html') {
+        return "404";
+      }
+    }
+    return "home";
+  }); // "home" | "builder" | "analyzer" | "login" | "profile" | "404"
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
@@ -383,6 +393,7 @@ export default function App() {
             }}
           />
         )}
+        {view === "404" && <NotFound navigate={navigate} />}
       </Suspense>
 
       <NotificationCenterModal
@@ -418,6 +429,17 @@ export default function App() {
       />
 
       <Footer onNavigate={navigate} />
+      {/* Only show CookieConsent banner on non-mobile screens */}
+      <div className="desktop-only-cookie-consent">
+        <CookieConsent />
+      </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .desktop-only-cookie-consent {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

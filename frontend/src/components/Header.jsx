@@ -410,61 +410,34 @@ export default function Header({
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "0.45rem",
-                padding: "0.55rem 1rem",
-                borderRadius: "16px",
+                justifyContent: "center",
+                gap: "0.4rem",
+                padding: user ? "0" : "0.5rem 0.85rem",
+                width: user ? "40px" : "auto",
+                height: user ? "40px" : "auto",
+                borderRadius: user ? "50%" : "12px",
                 background: user
                   ? "linear-gradient(135deg, #d97706, #b45309)"
-                  : "linear-gradient(135deg, #1e293b, #0f172a)",
-                color: "#ffffff",
+                  : "rgba(217, 119, 6, 0.1)",
+                color: user ? "#ffffff" : "var(--accent)",
                 border: "none",
-                fontWeight: 700,
-                fontSize: "0.88rem",
+                fontWeight: 600,
                 cursor: "pointer",
                 boxShadow: user
-                  ? "0 4px 14px rgba(217, 119, 6, 0.35)"
-                  : "0 4px 14px rgba(15, 23, 42, 0.25)",
+                  ? "0 4px 10px rgba(217, 119, 6, 0.3)"
+                  : "none",
                 transition: "all 0.2s ease"
               }}
             >
               {user ? (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
-                  <div style={{
-                    width: "26px",
-                    height: "26px",
-                    borderRadius: "50%",
-                    background: "#ffffff",
-                    color: "#d97706",
-                    fontSize: "0.78rem",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 800,
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
-                  }}>
-                    {user.name ? user.name[0].toUpperCase() : "U"}
-                  </div>
-                  <span>{user.name ? user.name.split(" ")[0] : "Account"}</span>
-                  <ChevronDown
-                    size={15}
-                    style={{
-                      transform: mobileMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
-                      transition: "transform 0.25s ease"
-                    }}
-                  />
-                </div>
+                <span style={{ fontWeight: 800, fontSize: "1.1rem" }}>
+                  {user.name ? user.name[0].toUpperCase() : "U"}
+                </span>
               ) : (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+                <>
                   {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-                  <span>Menu</span>
-                  <ChevronDown
-                    size={15}
-                    style={{
-                      transform: mobileMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
-                      transition: "transform 0.25s ease"
-                    }}
-                  />
-                </div>
+                  <span style={{ fontSize: "0.85rem" }}>Menu</span>
+                </>
               )}
             </button>
           </div>
