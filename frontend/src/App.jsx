@@ -429,18 +429,9 @@ export default function App() {
       />
 
       <Footer onNavigate={navigate} />
-      {/* Only show CookieConsent banner on non-mobile screens */}
-      <div className="desktop-only-cookie-consent">
+      <div className="cookie-consent-container">
         <CookieConsent />
       </div>
-      <style>{`
-        @media (max-width: 768px) {
-          .desktop-only-cookie-consent {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
-
