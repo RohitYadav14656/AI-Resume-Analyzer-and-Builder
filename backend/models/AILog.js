@@ -9,7 +9,7 @@ const AILogSchema = new mongoose.Schema(
       enum: ["builder", "ats_audit", "grammar_fix", "suggestion"],
       default: "ats_audit",
     },
-    model: { type: String, default: "llama-3.3-70b-versatile" },
+    model: { type: String, default: "openai/gpt-oss-120b" },
     promptTokens: { type: Number, default: 0 },
     completionTokens: { type: Number, default: 0 },
     totalTokens: { type: Number, default: 0 },

@@ -542,7 +542,7 @@ router.get("/ai-analytics", async (req, res, next) => {
           { feature: "Summary Generator", count: 270, pct: 7.9 },
         ],
         modelComparison: [
-          { model: "Llama-3.3-70B-Versatile", latencyMs: 380, successRate: "99.6%", costPerKTokens: "$0.0001" },
+          { model: "openai/gpt-oss-120b", latencyMs: 380, successRate: "99.6%", costPerKTokens: "$0.0001" },
           { model: "Llama-3.1-8B-Instant", latencyMs: 140, successRate: "99.8%", costPerKTokens: "$0.00005" },
         ],
       },
